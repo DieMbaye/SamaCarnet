@@ -175,7 +175,6 @@ import { User } from '../../../models/user.model';
               <div class="header-cell">Email</div>
               <div class="header-cell">Rôle</div>
               <div class="header-cell">Spécialité</div>
-              <div class="header-cell">Date d'inscription</div>
               <div class="header-cell">Actions</div>
             </div>
             
@@ -188,7 +187,6 @@ import { User } from '../../../models/user.model';
                 </span>
               </div>
               <div class="table-cell">{{ user.speciality || '-' }}</div>
-              <div class="table-cell">{{ user.createdAt | date:'short':'fr' }}</div>
               <div class="table-cell">
                 <button 
                   class="delete-btn"
