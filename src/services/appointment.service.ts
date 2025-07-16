@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { collection, query, where, getDocs, doc, addDoc, updateDoc, deleteDoc, orderBy } from 'firebase/firestore';
 import { FirebaseService } from './firebase.service';
 import { Appointment } from '../models/user.model';
+import { Firestore } from '@angular/fire/firestore';
+
 
 @Injectable({
   providedIn: 'root'
@@ -79,6 +81,11 @@ async getAppointmentsByPatient(patientId: string): Promise<Appointment[]> {
       throw error;
     }
   }
+  async addNotesToAppointment(id: string, notes: string) {
+  const appointmentRef = doc(this.firebaseService.firestore, `appointments/${id}`);
+  return updateDoc(appointmentRef, { notes });
+}
+
 
   async getPendingAppointments(): Promise<Appointment[]> {
     try {

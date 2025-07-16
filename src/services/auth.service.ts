@@ -61,8 +61,6 @@ export class AuthService {
   }
 }
 
-
-
  async signUp(email: string, password: string, userData: Partial<User>, setAsCurrentUser = true): Promise<User> {
   try {
     const userCredential = await createUserWithEmailAndPassword(this.firebaseService.auth, email, password);

@@ -56,11 +56,7 @@ import { AuthService } from '../../../services/auth.service';
           </button>
         </form>
         
-        <div class="login-footer">
-          <p>Compte de test:</p>
-          <p><strong>Admin:</strong> diem63977&#64;gmail.com</p>
-          <p><strong>Mot de passe:</strong> diem63977&#64;gmail.com</p>
-        </div>
+        
       </div>
     </div>
   `,
