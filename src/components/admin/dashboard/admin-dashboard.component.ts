@@ -2,11 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChartData, ChartOptions, ChartType } from 'chart.js';
-import { ChartsModule } from '../../../app/charts.module';
 import { UserService } from '../../../services/user.service';
 import { AuthService } from '../../../services/auth.service';
 import { User } from '../../../models/user.model';
-
+import { ChartsModule } from '../../../app/charts.module';
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,

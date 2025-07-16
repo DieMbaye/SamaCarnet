@@ -5,8 +5,7 @@ import { RoleGuard } from './guards/role.guard';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: '/login',
-    pathMatch: 'full'
+    loadComponent: () => import('./components/accueil/accueil.component').then(m => m.AccueilComponent)
   },
   {
     path: 'login',
@@ -36,6 +35,6 @@ export const routes: Routes = [
   },
   {
     path: '**',
-    redirectTo: '/login'
+    redirectTo: ''
   }
 ];

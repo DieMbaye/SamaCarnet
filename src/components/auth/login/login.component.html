@@ -1,0 +1,50 @@
+ <div class="login-container">
+      <div class="login-card">
+        <div class="login-header">
+          <h1>MediCare</h1>
+          <p>Connectez-vous à votre compte</p>
+        </div>
+        
+        <form (ngSubmit)="onSubmit()" class="login-form">
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input 
+              type="email" 
+              id="email" 
+              [(ngModel)]="credentials.email"
+              name="email"
+              required
+              placeholder="votre@email.com"
+              class="form-input"
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="password">Mot de passe</label>
+            <input 
+              type="password" 
+              id="password" 
+              [(ngModel)]="credentials.password"
+              name="password"
+              required
+              placeholder="••••••••"
+              class="form-input"
+            >
+          </div>
+          
+          <div class="error-message" *ngIf="errorMessage">
+            {{ errorMessage }}
+          </div>
+          
+          <button 
+            type="submit" 
+            class="login-btn"
+            [disabled]="isLoading"
+          >
+            {{ isLoading ? 'Connexion...' : 'Se connecter' }}
+          </button>
+        </form>
+        
+        
+      </div>
+    </div>
