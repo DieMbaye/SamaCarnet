@@ -1,4 +1,4 @@
-name: 🚀 Deploy Angular to GitHub Pages
+name: 🚀 Deploy Angular to Firebase Hosting
 
 on:
   push:
@@ -19,17 +19,13 @@ jobs:
           node-version: 20
 
       - name: 📦 Install dependencies
-        run: npm install  --legacy-peer-deps
+        run: npm install --legacy-peer-deps
 
+      - name: ⚙ Build Angular app
+        run: npm run build -- --configuration production
 
-      - name: ⚙️ Build Angular app
-        run: npm run build -- --configuration production --base-href=/ExamenDevWeb/
+      - name: 🔧 Install Firebase CLI
+        run: npm install -g firebase-tools
 
-      - name: 🚀 Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          branch: gh-pages
-          folder: dist/demo/browser
-          clean: true
-          token: ${{ secrets.PAT_TOKEN }}  # si tu utilises un PAT
-
+      - name: 🚀 Deploy to Firebase Hosting
+        run: firebase deploy --only hosting --token ${{ secrets.FIREBASE_TOKEN }}
