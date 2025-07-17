@@ -30,3 +30,6 @@ jobs:
         with:
           branch: gh-pages
           folder: dist/demo/browser
+          clean: true
+          token: ${{ secrets.PAT_TOKEN }}  # si tu utilises un PAT
+
