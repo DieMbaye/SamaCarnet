@@ -1,9 +1,11 @@
+import { FieldValue } from "firebase/firestore";
+
 export interface User {
   uid: string;
   email: string;
   displayName: string;
   role: 'admin' | 'medecin' | 'patient';
-  createdAt: Date;
+  createdAt: Date | FieldValue; // ✅ Autorise les deux types
   speciality?: string; // Pour les médecins
   phone?: string;
   address?: string;
@@ -27,10 +29,11 @@ export interface MedicalRecord {
   patientId: string;
   doctorId: string;
   date: Date;
-  diagnosis: string;
-  treatment: string;
-  notes: string;
+  type: string;          // type d'antécédent médical
+  description: string;   // description détaillée
+  notes?: string;        // notes optionnelles (si besoin)
 }
+
 
 export interface Appointment {
   id: string;

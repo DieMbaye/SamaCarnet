@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ChartOptions, ChartData } from 'chart.js';
 import { NgChartsModule } from 'ng2-charts';
 import { Patient } from '../../models/user.model'; // Assure-toi que le chemin est bon
+import { Timestamp } from 'firebase/firestore';  // ou firebase/app selon ta version
 
 import { AppointmentService } from '../../services/appointment.service';
 import { NotificationService } from '../../services/notification.service';
@@ -85,18 +86,29 @@ export class DoctorDashboardComponent implements OnInit {
   return this.appointments.filter(a => a.patientId === this.selectedPatient!.uid && a.status === 'completed');
 }
 
-  async loadDoctorData() {
-    if (!this.currentUser) return;
+async loadDoctorData() {
+  if (!this.currentUser) return;
 
-    try {
-      this.appointments = await this.appointmentService.getAppointmentsByDoctor(this.currentUser.uid);
-      this.patients = await this.userService.getUsersByRole('patient');
+  try {
+    this.appointments = await this.appointmentService.getAppointmentsByDoctor(this.currentUser.uid);
 
-      this.updateCharts();
-    } catch (error) {
-      console.error('Erreur lors du chargement des données:', error);
-    }
+    this.appointments = this.appointments.map(app => ({
+      ...app,
+      date: app.date instanceof Date 
+          ? app.date 
+          : (app.date as Timestamp).toDate(),
+      createdAt: app.createdAt instanceof Date 
+          ? app.createdAt 
+          : (app.createdAt as Timestamp).toDate()
+    }));
+
+    this.patients = await this.userService.getUsersByRole('patient');
+    this.updateCharts();
+  } catch (error) {
+    console.error('Erreur lors du chargement des données:', error);
   }
+}
+
 
   updateCharts() {
     const pending = this.appointments.filter(a => a.status === 'pending').length;
@@ -150,22 +162,23 @@ export class DoctorDashboardComponent implements OnInit {
   }
 
   async confirmAppointment(appointment: Appointment) {
-    if (!this.currentUser) return;
+  if (!this.currentUser) return;
 
-    try {
-      await this.appointmentService.updateAppointmentStatus(appointment.id, 'confirmed');
-      await this.notificationService.sendConfirmationNotification(
-        appointment.patientId,
-        this.currentUser.displayName,
-        appointment.date
-      );
-      await this.loadDoctorData();
-      alert('Rendez-vous confirmé avec succès!');
-    } catch (error) {
-      console.error('Erreur lors de la confirmation:', error);
-      alert('Rendez-vous confirmé avec succès!');
-    }
+  try {
+    await this.appointmentService.updateAppointmentStatus(appointment.id, 'confirmed');
+    await this.notificationService.sendConfirmationNotification(
+      appointment.patientId,
+      this.currentUser.displayName,
+      appointment.date
+    );
+    await this.loadDoctorData();
+    alert('Rendez-vous confirmé avec succès!');
+  } catch (error) {
+    console.error('Erreur lors de la confirmation:', error);
+    alert('Erreur lors de la confirmation du rendez-vous');
   }
+}
+
 
   async rejectAppointment(appointment: Appointment) {
     if (!confirm('Êtes-vous sûr de vouloir refuser ce rendez-vous?')) return;

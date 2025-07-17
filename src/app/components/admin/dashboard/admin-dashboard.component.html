@@ -151,38 +151,46 @@
         </div>
 
         <!-- Liste des utilisateurs -->
-        <div class="users-list">
-            <div class="users-filters">
-                <select [(ngModel)]="selectedRoleFilter" (change)="filterUsers()" class="filter-select">
-                    <option value="">Tous les rôles</option>
-                    <option value="admin">Administrateur</option>
-                    <option value="medecin">Médecin</option>
-                    <option value="patient">Patient</option>
-                </select>
-            </div>
+       <!-- ... le début de ton code HTML est inchangé -->
 
-            <div class="users-table">
-                <div class="table-header">
-                    <div class="header-cell">Nom</div>
-                    <div class="header-cell">Email</div>
-                    <div class="header-cell">Rôle</div>
-                    <div class="header-cell">Spécialité</div>
-                </div>
+<!-- Liste des utilisateurs -->
+<div class="users-list">
+  <div class="users-filters">
+    <select [(ngModel)]="selectedRoleFilter" (change)="filterUsers()" class="filter-select">
+      <option value="">Tous les rôles</option>
+      <option value="admin">Administrateur</option>
+      <option value="medecin">Médecin</option>
+      <option value="patient">Patient</option>
+    </select>
+  </div>
 
-                <div *ngFor="let user of filteredUsers" class="table-row">
-                    <div class="table-cell">{{ user.displayName }}</div>
-                    <div class="table-cell">{{ user.email }}</div>
-                    <div class="table-cell">
-                        <span class="role-badge" [class]="'role-' + user.role">
-                            {{ getRoleDisplay(user.role) }}
-                        </span>
-                    </div>
-                    <div class="table-cell">{{ user.speciality || '-' }}</div>
-                    <div class="table-cell">
-                       
-                    </div>
-                </div>
-            </div>
-        </div>
+  <div class="users-table">
+    <div class="table-header">
+      <div class="header-cell">Nom</div>
+      <div class="header-cell">Email</div>
+      <div class="header-cell">Rôle</div>
+      <div class="header-cell">Spécialité</div>
+    </div>
+
+  <div *ngFor="let user of paginatedUsers" class="table-row">
+      <div class="table-cell">{{ user.displayName }}</div>
+      <div class="table-cell">{{ user.email }}</div>
+      <div class="table-cell">
+        <span class="role-badge" [class]="'role-' + user.role">
+          {{ getRoleDisplay(user.role) }}
+        </span>
+      </div>
+      <div class="table-cell">{{ user.speciality || '-' }}</div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination-controls">
+<button (click)="prevPage()" [disabled]="currentPage === 1">Précédent</button>
+    <span>Page {{ currentPage }} / {{ totalPages }}</span>
+    <button (click)="nextPage()" [disabled]="currentPage === totalPages">Suivant</button>
+  </div>
+</div>
+
     </div>
 </div>

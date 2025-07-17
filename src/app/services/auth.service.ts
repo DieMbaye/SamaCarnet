@@ -1,7 +1,22 @@
 import { Injectable } from '@angular/core';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import { BehaviorSubject, Observable } from 'rxjs';
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  UserCredential,
+} from 'firebase/auth';
+import {
+  doc,
+  getDoc,
+  setDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  serverTimestamp,
+} from 'firebase/firestore';
+import { BehaviorSubject } from 'rxjs';
 import { FirebaseService } from './firebase.service';
 import { User } from '../models/user.model';
 
@@ -32,61 +47,56 @@ export class AuthService {
       } else {
         this.currentUserSubject.next(null);
       }
-      this.authCheckedSubject.next(true); // Auth check terminée
+      this.authCheckedSubject.next(true);
     });
   }
 
   async signIn(email: string, password: string): Promise<User> {
     try {
-      const userCredential = await signInWithEmailAndPassword(this.firebaseService.auth, email, password);
-      const uid = userCredential.user.uid;
-      const userRef = doc(this.firebaseService.firestore, 'users', uid);
+      const credential = await signInWithEmailAndPassword(this.firebaseService.auth, email, password);
+      const userRef = doc(this.firebaseService.firestore, 'users', credential.user.uid);
       const userDoc = await getDoc(userRef);
 
-      if (userDoc.exists()) {
-        const userData = userDoc.data() as User;
-        this.currentUserSubject.next(userData);
-        return userData;
-      } else {
-        const fallbackUser: User = {
-          uid,
-          email,
-          displayName: '',
-          role: 'patient',
-          createdAt: new Date()
-        };
-
-        await setDoc(userRef, fallbackUser);
-        this.currentUserSubject.next(fallbackUser);
-        return fallbackUser;
+      if (!userDoc.exists()) {
+        throw new Error("Utilisateur non trouvé dans Firestore.");
       }
-    } catch (error: any) {
-      console.error('Erreur Firebase:', error.code, error.message);
+
+      const userData = userDoc.data() as User;
+      this.currentUserSubject.next(userData);
+      return userData;
+
+    } catch (error) {
+      console.error('Erreur lors de la connexion :', error);
       throw error;
     }
   }
 
   async signUp(email: string, password: string, userData: Partial<User>, setAsCurrentUser = true): Promise<User> {
     try {
-      const userCredential = await createUserWithEmailAndPassword(this.firebaseService.auth, email, password);
+      const userCredential: UserCredential = await createUserWithEmailAndPassword(this.firebaseService.auth, email, password);
+
+      const uid = userCredential.user.uid;
 
       const newUser: User = {
-        uid: userCredential.user.uid,
+        uid,
         email,
         displayName: userData.displayName || '',
         role: userData.role || 'patient',
-        createdAt: new Date(),
+        createdAt: serverTimestamp(), // timestamp Firebase
         ...userData
       };
 
-      await setDoc(doc(this.firebaseService.firestore, 'users', newUser.uid), newUser);
+      const userRef = doc(this.firebaseService.firestore, 'users', uid);
+      await setDoc(userRef, newUser);
 
       if (setAsCurrentUser) {
         this.currentUserSubject.next(newUser);
       }
 
       return newUser;
+
     } catch (error) {
+      console.error("Erreur lors de la création d'utilisateur :", error);
       throw error;
     }
   }
@@ -96,6 +106,7 @@ export class AuthService {
       await signOut(this.firebaseService.auth);
       this.currentUserSubject.next(null);
     } catch (error) {
+      console.error("Erreur lors de la déconnexion :", error);
       throw error;
     }
   }
@@ -129,7 +140,7 @@ export class AuthService {
         }, false);
       }
     } catch (error) {
-      console.log('Admin déjà initialisé ou erreur:', error);
+      console.log('Erreur d’initialisation de l’admin :', error);
     }
   }
 }

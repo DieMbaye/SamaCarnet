@@ -40,7 +40,6 @@ export class AdminDashboardComponent implements OnInit {
 
   // ---------------------- GRAPHIQUES ----------------------
 
-  // Données et options pour le graphique des rôles (camembert)
   roleChartLabels: string[] = ['Administrateurs', 'Médecins', 'Patients'];
   roleChartData: ChartData<'pie', number[], string | string[]> = {
     labels: this.roleChartLabels,
@@ -53,7 +52,6 @@ export class AdminDashboardComponent implements OnInit {
   };
   roleChartType: ChartType = 'pie';
 
-  // Données et options pour le graphique des spécialités (barres)
   specialityChartLabels: string[] = [];
   specialityChartData: ChartData<'bar', number[], string | string[]> = {
     labels: [],
@@ -76,12 +74,37 @@ export class AdminDashboardComponent implements OnInit {
     }
   };
 
+  // ---------------------- PAGINATION ----------------------
+  currentPage = 1;
+  usersPerPage = 10;
+
+  get paginatedUsers(): User[] {
+    const startIndex = (this.currentPage - 1) * this.usersPerPage;
+    return this.filteredUsers.slice(startIndex, startIndex + this.usersPerPage);
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredUsers.length / this.usersPerPage);
+  }
+
+  nextPage() {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+    }
+  }
+
+  prevPage() {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+    }
+  }
+
   // -------------------------------------------------------
 
   constructor(
     private userService: UserService,
     private authService: AuthService
-  ) { }
+  ) {}
 
   ngOnInit() {
     this.loadData();
@@ -99,7 +122,6 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   updateCharts() {
-    // Comptage des utilisateurs par rôle
     const adminCount = this.users.filter(u => u.role === 'admin').length;
     const doctorCount = this.users.filter(u => u.role === 'medecin').length;
     const patientCount = this.users.filter(u => u.role === 'patient').length;
@@ -114,7 +136,6 @@ export class AdminDashboardComponent implements OnInit {
       ]
     };
 
-    // Spécialités
     this.specialityChartLabels = Object.keys(this.statistics.specialities);
     const specialityCounts = Object.values(this.statistics.specialities);
 
@@ -134,6 +155,8 @@ export class AdminDashboardComponent implements OnInit {
     this.filteredUsers = this.selectedRoleFilter
       ? this.users.filter(user => user.role === this.selectedRoleFilter)
       : this.users;
+
+    this.currentPage = 1; // reset page
   }
 
   async addUser() {
@@ -142,19 +165,29 @@ export class AdminDashboardComponent implements OnInit {
       return;
     }
 
+    if (this.newUser.role === 'medecin' && !this.newUser.speciality) {
+      alert('Veuillez indiquer la spécialité pour un médecin');
+      return;
+    }
+
     this.isLoading = true;
 
     try {
       const defaultPassword = 'password123';
 
+      const userData: any = {
+        displayName: this.newUser.displayName,
+        role: this.newUser.role
+      };
+
+      if (this.newUser.role === 'medecin') {
+        userData.speciality = this.newUser.speciality;
+      }
+
       await this.authService.signUp(
         this.newUser.email,
         defaultPassword,
-        {
-          displayName: this.newUser.displayName,
-          role: this.newUser.role,
-          speciality: this.newUser.role === 'medecin' ? this.newUser.speciality : undefined
-        },
+        userData,
         false
       );
 
@@ -181,9 +214,7 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   async deleteUser(userId: string) {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur?')) {
-      return;
-    }
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur?')) return;
 
     try {
       await this.userService.deleteUser(userId);
@@ -202,4 +233,5 @@ export class AdminDashboardComponent implements OnInit {
       default: return role;
     }
   }
+  
 }

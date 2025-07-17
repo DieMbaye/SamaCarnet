@@ -1,0 +1,244 @@
+ <div class="patient-dashboard">
+      <div class="dashboard-header">
+        <h1>Bienvenue, {{ currentUser?.displayName }}</h1>
+        <p>Gérez vos rendez-vous et votre dossier médical</p>
+      </div>
+
+      <div class="dashboard-tabs">
+        <button 
+          *ngFor="let tab of tabs"
+          class="tab-btn"
+          [class.active]="activeTab === tab.id"
+          (click)="activeTab = tab.id"
+        >
+          {{ tab.label }}
+        </button>
+      </div>
+
+      <!-- Section Dossier Médical -->
+      <div class="tab-content" *ngIf="activeTab === 'medical'">
+        <div class="section-header">
+          <h2>Mon dossier médical</h2>
+          <button class="add-btn" (click)="showAddRecordForm = true">
+            Ajouter un antécédent
+          </button>
+        </div>
+
+        <!-- Formulaire d'ajout d'antécédent -->
+        <div class="add-record-form" *ngIf="showAddRecordForm">
+          <h3>Nouvel antécédent médical</h3>
+          <form (ngSubmit)="addMedicalRecord()" class="record-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Date</label>
+                <input 
+                  type="date" 
+                  [(ngModel)]="newRecord.date"
+                  name="date"
+                  required
+                  class="form-input"
+                >
+              </div>
+              
+              <div class="form-group">
+                <label>Type</label>
+                <select 
+                  [(ngModel)]="newRecord.type"
+                  name="type"
+                  required
+                  class="form-select"
+                >
+                  <option value="Maladie">Maladie</option>
+                  <option value="Chirurgie">Chirurgie</option>
+                  <option value="Allergie">Allergie</option>
+                  <option value="Vaccination">Vaccination</option>
+                  <option value="Autre">Autre</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label>Description</label>
+              <textarea 
+                [(ngModel)]="newRecord.description"
+                name="description"
+                required
+                class="form-textarea"
+                rows="3"
+              ></textarea>
+            </div>
+            
+            <div class="form-actions">
+              <button type="submit" class="submit-btn">Ajouter</button>
+              <button type="button" class="cancel-btn" (click)="cancelAddRecord()">Annuler</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Liste des antécédents -->
+        <div class="medical-records">
+          <div *ngFor="let record of medicalRecords" class="record-card">
+            <div class="record-header">
+              <h4>{{ record.type }}</h4>
+              <span class="record-date">{{ record.date | date:'longDate':'fr' }}</span>
+            </div>
+            <p class="record-description">{{ record.description }}</p>
+            <button class="delete-record-btn" (click)="deleteMedicalRecord(record.id)">
+              Supprimer
+            </button>
+          </div>
+          
+          <div *ngIf="medicalRecords.length === 0" class="no-records">
+            <p>Aucun antécédent médical enregistré</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section Rendez-vous -->
+      <div class="tab-content" *ngIf="activeTab === 'appointments'">
+        <div class="section-header">
+          <h2>Mes rendez-vous</h2>
+          <button class="add-btn" (click)="showBookAppointment = true">
+            Prendre rendez-vous
+          </button>
+        </div>
+
+        <!-- Formulaire de prise de rendez-vous -->
+        <div class="book-appointment" *ngIf="showBookAppointment">
+          <h3>Prendre un rendez-vous</h3>
+          
+          <div class="booking-steps">
+            <div class="step" [class.active]="bookingStep === 1">
+              <div class="step-number">1</div>
+              <span>Spécialité</span>
+            </div>
+            <div class="step" [class.active]="bookingStep === 2">
+              <div class="step-number">2</div>
+              <span>Médecin</span>
+            </div>
+            <div class="step" [class.active]="bookingStep === 3">
+              <div class="step-number">3</div>
+              <span>Date & Heure</span>
+            </div>
+          </div>
+
+          <!-- Étape 1: Choisir la spécialité -->
+          <div class="step-content" *ngIf="bookingStep === 1">
+            <h4>Choisissez une spécialité</h4>
+            <div class="specialities-grid">
+              <div 
+                *ngFor="let speciality of specialities"
+                class="speciality-option"
+                (click)="selectSpeciality(speciality)"
+              >
+                <div class="speciality-icon">{{ getSpecialityIcon(speciality) }}</div>
+                <span>{{ speciality }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Étape 2: Choisir le médecin -->
+          <div class="step-content" *ngIf="bookingStep === 2">
+            <h4>Choisissez un médecin</h4>
+            <div class="doctors-list">
+              <div 
+                *ngFor="let doctor of availableDoctors"
+                class="doctor-card"
+                (click)="selectDoctor(doctor)"
+              >
+                <div class="doctor-info">
+                  <h5>Dr. {{ doctor.displayName }}</h5>
+                  <p>{{ doctor.speciality }}</p>
+                  <span class="doctor-experience">{{ doctor.experience }} ans d'expérience</span>
+                </div>
+                <button class="select-doctor-btn">Choisir</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Étape 3: Choisir date et heure -->
+          <div class="step-content" *ngIf="bookingStep === 3">
+            <h4>Choisissez la date et l'heure</h4>
+            <form (ngSubmit)="bookAppointment()" class="appointment-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Date</label>
+                  <input 
+                    type="date" 
+                    [(ngModel)]="newAppointment.date"
+                    name="date"
+                    required
+                    class="form-input"
+                    [min]="minDate"
+                  >
+                </div>
+                
+                <div class="form-group">
+                  <label>Heure</label>
+                  <select 
+                    [(ngModel)]="newAppointment.time"
+                    name="time"
+                    required
+                    class="form-select"
+                  >
+                    <option value="09:00">09:00</option>
+                    <option value="10:00">10:00</option>
+                    <option value="11:00">11:00</option>
+                    <option value="14:00">14:00</option>
+                    <option value="15:00">15:00</option>
+                    <option value="16:00">16:00</option>
+                    <option value="17:00">17:00</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label>Motif de la consultation</label>
+                <textarea 
+                  [(ngModel)]="newAppointment.reason"
+                  name="reason"
+                  required
+                  class="form-textarea"
+                  rows="3"
+                ></textarea>
+              </div>
+              
+              <div class="form-actions">
+                <button type="submit" class="submit-btn">Confirmer le rendez-vous</button>
+                <button type="button" class="cancel-btn" (click)="cancelBooking()">Annuler</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Liste des rendez-vous -->
+        <div class="appointments-list">
+          <div *ngFor="let appointment of appointments" class="appointment-card">
+            <div class="appointment-header">
+              <h4>Dr. {{ getDoctorName(appointment.doctorId) }}</h4>
+              <span class="appointment-status" [class]="'status-' + appointment.status">
+                {{ getStatusDisplay(appointment.status) }}
+              </span>
+            </div>
+            <div class="appointment-details">
+              <p><strong>Date:</strong> {{ appointment.date | date:'dd/MM/yyyy' }}</p>
+              <p><strong>Heure:</strong> {{ appointment.time }}</p>
+              <p><strong>Motif:</strong> {{ appointment.reason }}</p>
+            </div>
+            <div class="appointment-actions">
+              <button 
+                *ngIf="appointment.status === 'pending' || appointment.status === 'confirmed'"
+                class="cancel-appointment-btn"
+                (click)="cancelAppointment(appointment.id)"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+          
+          <div *ngIf="appointments.length === 0" class="no-appointments">
+            <p>Aucun rendez-vous programmé</p>
+          </div>
+        </div>
+      </div>
+    </div>
