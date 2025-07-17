@@ -6,7 +6,6 @@ import { UserService } from '../../services/user.service';
 import { AppointmentService } from '../../services/appointment.service';
 import { NotificationService } from '../../services/notification.service';
 import { User, Doctor, Appointment, MedicalRecord } from '../../models/user.model';
-
 @Component({
   selector: 'app-patient-dashboard',
   standalone: true,

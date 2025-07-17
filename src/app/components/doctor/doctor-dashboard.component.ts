@@ -5,11 +5,11 @@ import { ChartOptions, ChartData } from 'chart.js';
 import { NgChartsModule } from 'ng2-charts';
 import { Patient } from '../../models/user.model'; // Assure-toi que le chemin est bon
 
-import { AuthService } from '../../services/auth.service';
 import { AppointmentService } from '../../services/appointment.service';
 import { NotificationService } from '../../services/notification.service';
 import { UserService } from '../../services/user.service';
 import { User, Appointment } from '../../models/user.model';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-doctor-dashboard',

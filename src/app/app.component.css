@@ -1,0 +1,18 @@
+.app {
+      min-height: 100vh;
+      background: #f3f4f6;
+    }
+
+    .main-content {
+      min-height: calc(100vh - 80px);
+    }
+
+    .unauthorized {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      font-size: 1.5rem;
+      color: #ef4444;
+      background: #fef2f2;
+    }
