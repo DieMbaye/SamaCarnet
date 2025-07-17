@@ -19,7 +19,8 @@ jobs:
           node-version: 18
 
       - name: 📦 Install dependencies
-        run: npm ci
+        run: npm install --legacy-peer-deps
+
 
       - name: ⚙️ Build Angular app
         run: npm run build -- --configuration production --base-href=/ExamenDevWeb/
