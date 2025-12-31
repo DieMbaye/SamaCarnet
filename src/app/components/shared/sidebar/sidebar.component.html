@@ -1,0 +1,270 @@
+<!-- sidebar-with-header.component.html -->
+
+<!-- Overlay pour mobile -->
+<div
+  class="sidebar-overlay"
+  [class.active]="isMobileOpen"
+  (click)="onToggleMobileSidebar()"
+></div>
+
+<!-- Conteneur principal -->
+<div class="sidebar-layout">
+  <!-- Header -->
+  <header
+    class="sidebar-header-section"
+    [class.collapsed]="isSidebarCollapsed && !isMobileOpen"
+  >
+    <div class="header-content">
+      <!-- Bouton hamburger pour mobile -->
+      <button
+        class="mobile-menu-btn"
+        (click)="onToggleMobileSidebar()"
+        *ngIf="isMobileOpen"
+        aria-label="Menu"
+      >
+        <i class="fas fa-bars"></i>
+      </button>
+
+      <!-- Titre dynamique -->
+      <div class="header-title">
+        <h2>
+          {{ appName }}
+        </h2>
+      </div>
+
+      <!-- Section utilisateur du header -->
+      <div class="header-user-section">
+        <!-- Actions Rapides -->
+        <div class="quick-actions">
+          <button
+            class="action-btn"
+            (click)="toggleQuickActions()"
+            title="Actions rapides"
+          >
+            <i class="fas fa-bolt"></i>
+          </button>
+
+          <div class="actions-dropdown" *ngIf="showQuickActions">
+            <div class="actions-header">
+              <h3>Actions Rapides</h3>
+            </div>
+            <div class="actions-list">
+              <div
+                *ngFor="let action of getFilteredQuickActions()"
+                class="action-item"
+                (click)="onQuickActionClick(action)"
+              >
+                <span class="action-item-icon">{{ action.icon }}</span>
+                <span class="action-item-label">{{ action.label }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notifications -->
+        <div class="notifications">
+          <button
+            class="notification-btn"
+            (click)="toggleNotifications()"
+            title="Notifications"
+          >
+            <i class="fas fa-bell"></i>
+            <span class="notification-count" *ngIf="unreadCount > 0">{{
+              unreadCount
+            }}</span>
+          </button>
+
+          <div class="notification-dropdown" *ngIf="showNotifications">
+            <div class="notification-header">
+              <h3>Notifications</h3>
+              <button class="mark-all-btn" (click)="markAllAsRead()">
+                Tout marquer comme lu
+              </button>
+            </div>
+            <div class="notification-list">
+              <div
+                *ngFor="let notification of notifications"
+                class="notification-item"
+                [class.unread]="!notification.read"
+                (click)="markAsRead(notification.id)"
+              >
+                <div class="notification-content">
+                  <h4>{{ notification.title }}</h4>
+                  <p>{{ notification.message }}</p>
+                  <small>{{
+                    notification.createdAt | date : "short" : "fr"
+                  }}</small>
+                </div>
+                <div
+                  class="notification-indicator"
+                  *ngIf="!notification.read"
+                ></div>
+              </div>
+              <div *ngIf="notifications.length === 0" class="no-notifications">
+                <div class="empty-state">
+                  <i class="fas fa-bell"></i>
+                  <p>Aucune notification</p>
+                </div>
+              </div>
+            </div>
+            <div class="notification-footer">
+              <a [routerLink]="['/notifications']" class="view-all-link"
+                >Voir toutes les notifications</a
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Profil Utilisateur -->
+        <div class="profile-menu">
+          <button class="profile-btn" (click)="toggleProfileMenu()">
+            <div class="avatar">
+              {{ getUserInitials() }}
+            </div>
+            <div class="user-info">
+              <span class="user-name">{{ currentUser?.displayName }}</span>
+              <span class="user-role">{{ getRoleDisplay(userRole) }}</span>
+            </div>
+            <i class="fas fa-chevron-down dropdown-arrow"></i>
+          </button>
+
+          <div class="profile-dropdown" *ngIf="showProfileMenu">
+            <div class="profile-header">
+              <div class="profile-avatar">
+                {{ getUserInitials() }}
+              </div>
+              <div class="profile-info">
+                <h4>{{ currentUser?.displayName }}</h4>
+                <p>{{ getRoleDisplay(userRole) }}</p>
+                <small>{{ currentUser?.email }}</small>
+              </div>
+            </div>
+
+            <div class="dropdown-divider"></div>
+
+            <div class="dropdown-menu">
+              <a class="dropdown-item" (click)="navigateToProfile()">
+                <i class="fas fa-user item-icon"></i>
+                <span class="item-label">Mon profil</span>
+              </a>
+
+              <a class="dropdown-item" (click)="navigateToSettings()">
+                <i class="fas fa-cogs item-icon"></i>
+                <span class="item-label">Paramètres</span>
+              </a>
+
+              <a class="dropdown-item" [routerLink]="['/help']">
+                <i class="fas fa-question-circle item-icon"></i>
+                <span class="item-label">Aide & Support</span>
+              </a>
+
+              <div class="dropdown-divider"></div>
+
+              <a class="dropdown-item" [routerLink]="['/about']">
+                <i class="fas fa-info-circle item-icon"></i>
+                <span class="item-label">À propos</span>
+              </a>
+            </div>
+
+            <div class="dropdown-divider"></div>
+
+            <div class="dropdown-footer">
+              <button class="logout-btn" (click)="onLogout()">
+                <i class="fas fa-sign-out-alt logout-icon"></i>
+                Déconnexion
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bouton pour réduire/étendre sidebar (desktop) -->
+      <button
+        class="toggle-sidebar-btn"
+        (click)="onToggleSidebar()"
+        *ngIf="!isMobileOpen"
+        title="Réduire/Étendre le menu"
+      >
+        <i
+          class="fas"
+          [class.fa-chevron-left]="!isSidebarCollapsed"
+          [class.fa-chevron-right]="isSidebarCollapsed"
+        ></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Sidebar Navigation -->
+  <nav
+    class="admin-sidebar"
+    [class.collapsed]="isSidebarCollapsed && !isMobileOpen"
+    [class.mobile-open]="isMobileOpen"
+  >
+    <!-- Logo et titre réduit -->
+    <div class="sidebar-logo">
+      <div class="app-logo">
+        <!-- Logo image -->
+        <img
+          src="../../../assets/images/log.png"
+          alt="MediCare Logo"
+          class="logo-image"
+          [class.logo-collapsed]="isSidebarCollapsed && !isMobileOpen"
+        />
+        <!-- Optionnel : version texte pour réduire -->
+        <span class="logo-fallback" *ngIf="isSidebarCollapsed && !isMobileOpen">
+          MCP
+        </span>
+      </div>
+      <div class="app-details" *ngIf="shouldShowText()">
+        <h2 class="app-name">{{ appName }}</h2>
+     <!--   <span class="app-subtitle">{{ getSidebarTitle() }}</span> -->
+      </div>
+    </div>
+
+    <!-- Menu -->
+    <ul class="sidebar-menu">
+      <li
+        *ngFor="let item of menuItems"
+        [class.active]="activeSection === item.id"
+      >
+        <a (click)="setActiveSection(item.id)" class="menu-link">
+          <i [class]="item.icon"></i>
+          <span class="menu-text" *ngIf="shouldShowText()">{{
+            item.label
+          }}</span>
+          <span
+            *ngIf="item.badge && item.badge > 0 && shouldShowText()"
+            class="menu-badge"
+            [class]="'badge-' + (item.badgeColor || 'primary')"
+          >
+            {{ item.badge }}
+          </span>
+        </a>
+      </li>
+    </ul>
+
+    <!-- Footer sidebar (optionnel) -->
+    <div class="sidebar-footer" *ngIf="shouldShowText()">
+      <div class="user-mini-profile">
+        <div class="mini-avatar">
+          {{ getUserInitials() }}
+        </div>
+        <div class="mini-info">
+          <span class="mini-name">{{ currentUser?.displayName }}</span>
+          <span class="mini-role">{{ getRoleDisplay(userRole) }}</span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Bouton toggle pour mobile -->
+  <div class="sidebar-toggle-container mobile" *ngIf="isMobileOpen">
+    <button
+      class="toggle-sidebar"
+      (click)="onToggleMobileSidebar()"
+      aria-label="Fermer le menu"
+    >
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+</div>

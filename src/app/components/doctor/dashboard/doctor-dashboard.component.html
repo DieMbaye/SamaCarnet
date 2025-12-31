@@ -1,0 +1,83 @@
+<div class="doctor-container">
+  <!-- Sidebar réutilisable -->
+  <app-sidebar
+    [isSidebarCollapsed]="isSidebarCollapsed"
+    [isMobileOpen]="isMobileOpen"
+    [activeSection]="getActiveSection()"
+    [currentUser]="currentUser"
+    (sectionChange)="onSectionChange($event)"
+    (toggleSidebar)="onToggleSidebar()"
+    (toggleMobileSidebar)="onToggleMobileSidebar()"
+    (logout)="onLogout()"
+  ></app-sidebar>
+
+  <!-- Main Content -->
+  <main class="doctor-main" [class.expanded]="isSidebarCollapsed">
+    <!-- Header mobile -->
+    <div class="mobile-header">
+      <button
+        class="mobile-toggle"
+        (click)="onToggleMobileSidebar()"
+        aria-label="Toggle Sidebar"
+      >
+        <i class="fas fa-bars"></i>
+      </button>
+      <h1>{{ headerConfig.title }}</h1>
+    </div>
+
+    <!-- Header Section Dynamique -->
+    <div class="dashboard-header">
+      <div class="header-left">
+        <div *ngIf="headerConfig.showProfile" class="doctor-profile">
+          <div class="avatar">
+            <i class="fas fa-user-md"></i>
+          </div>
+          <div class="profile-info">
+            <h1>Dr. {{ currentUser?.displayName }}</h1>
+            <p class="speciality">{{ currentUser?.speciality }}</p>
+            <div class="profile-stats" *ngIf="headerConfig.showStats">
+              <span class="stat">
+                <i class="fas fa-star"></i>
+                {{ doctorStats.rating }}/5
+              </span>
+              <span class="stat">
+                <i class="fas fa-calendar-check"></i>
+                {{ doctorStats.todayAppointments }} RDV aujourd'hui
+              </span>
+              <span class="stat">
+                <i class="fas fa-award"></i>
+                {{ doctorStats.experience }} ans d'expérience
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="!headerConfig.showProfile" class="section-header">
+          <h1>{{ headerConfig.title }}</h1>
+          <p *ngIf="headerConfig.subtitle" class="section-subtitle">
+            {{ headerConfig.subtitle }}
+          </p>
+        </div>
+      </div>
+
+      <div class="header-actions" *ngIf="headerConfig.actions && headerConfig.actions.length > 0">
+        <div class="actions-group">
+          <button
+            *ngFor="let action of headerConfig.actions"
+            [class]="action.primary ? 'btn-primary' : 'btn-secondary'"
+            (click)="action.action()"
+            [disabled]="action.disabled"
+          >
+            <i [class]="action.icon" [class.fa-spin]="isLoading && action.label.includes('Actualisation')"></i>
+            {{ action.label }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Content -->
+    <section class="section-content">
+      <router-outlet></router-outlet>
+    </section>
+  </main>
+</div>

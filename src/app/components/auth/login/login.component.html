@@ -1,50 +1,96 @@
- <div class="login-container">
-      <div class="login-card">
-        <div class="login-header">
-          <h1>MediApp</h1>
-          <p>Connectez-vous à votre compte</p>
-        </div>
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <h1>SamaCarnet</h1>
+      <p>Connectez-vous à votre compte</p>
+    </div>
+
+    <form (ngSubmit)="onSubmit()" class="login-form">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          [(ngModel)]="credentials.email"
+          name="email"
+          required
+          placeholder="votre@email.com"
+          class="form-input"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Mot de passe</label>
+        <input
+          type="password"
+          id="password"
+          [(ngModel)]="credentials.password"
+          name="password"
+          required
+          placeholder="••••••••"
+          class="form-input"
+        />
+      </div>
+
+      <!-- Mot de passe oublié -->
+      <div class="forgot-password">
+        <a (click)="showResetPassword()" class="forgot-link">
+          Mot de passe oublié ?
+        </a>
+      </div>
+
+      <div class="error-message" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+
+      <div class="success-message" *ngIf="successMessage">
+        {{ successMessage }}
+      </div>
+
+      <button type="submit" class="login-btn" [disabled]="isLoading">
+        {{ isLoading ? "Connexion..." : "Se connecter" }}
+      </button>
+
+      <div class="register-link">
+        <p>Pas encore de compte ? 
+          <a routerLink="/register" class="register-link-text">Créer un compte</a>
+        </p>
+      </div>
+    </form>
+
+    <!-- Modal Réinitialisation Mot de Passe -->
+    <div *ngIf="isResettingPassword" class="modal-overlay">
+      <div class="modal-content">
+        <h3>Réinitialiser le mot de passe</h3>
+        <p>Entrez votre adresse email pour recevoir un lien de réinitialisation</p>
         
-        <form (ngSubmit)="onSubmit()" class="login-form">
-          <div class="form-group">
-            <label for="email">Email</label>
-            <input 
-              type="email" 
-              id="email" 
-              [(ngModel)]="credentials.email"
-              name="email"
-              required
-              placeholder="votre@email.com"
-              class="form-input"
-            >
-          </div>
-          
-          <div class="form-group">
-            <label for="password">Mot de passe</label>
-            <input 
-              type="password" 
-              id="password" 
-              [(ngModel)]="credentials.password"
-              name="password"
-              required
-              placeholder="••••••••"
-              class="form-input"
-            >
-          </div>
-          
-          <div class="error-message" *ngIf="errorMessage">
-            {{ errorMessage }}
-          </div>
-          
+        <div class="form-group">
+          <input
+            type="email"
+            [(ngModel)]="resetEmail"
+            placeholder="votre@email.com"
+            class="form-input"
+          />
+        </div>
+
+        <div class="modal-actions">
           <button 
-            type="submit" 
-            class="login-btn"
+            type="button" 
+            class="btn-secondary"
+            (click)="isResettingPassword = false"
+          >
+            Annuler
+          </button>
+          <button 
+            type="button" 
+            class="btn-primary"
+            (click)="onResetPassword()"
             [disabled]="isLoading"
           >
-            {{ isLoading ? 'Connexion...' : 'Se connecter' }}
+            {{ isLoading ? "Envoi..." : "Envoyer" }}
           </button>
-        </form>
-        
-        
+        </div>
       </div>
     </div>
+  </div>
+</div>

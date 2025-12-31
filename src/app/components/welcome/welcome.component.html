@@ -1,0 +1,459 @@
+<!-- HEADER -->
+<header>
+  <div class="container">
+    <nav class="navbar">
+      <a routerLink="/" class="logo">
+        <img src="../assets/images/logo.png" alt="SamaCarnet Hôpital" />
+        <span>SamaCarnet</span>
+      </a>
+
+      <div class="nav-links">
+        <a
+          href="#accueil"
+          (click)="scrollTo('accueil'); $event.preventDefault()"
+          >Accueil</a
+        >
+        <a
+          href="#services"
+          (click)="scrollTo('services'); $event.preventDefault()"
+          >Services</a
+        >
+        <a
+          href="#departements"
+          (click)="scrollTo('departements'); $event.preventDefault()"
+          >Départements</a
+        >
+        <a href="#equipe" (click)="scrollTo('equipe'); $event.preventDefault()"
+          >Notre Équipe</a
+        >
+        <a
+          href="#contact"
+          (click)="scrollTo('contact'); $event.preventDefault()"
+          >Contact</a
+        >
+      </div>
+
+      <div class="nav-actions">
+        <!--  <a routerLink="/login" class="btn btn-secondary">Espace Staff</a> -->
+        <a
+          href="#urgence"
+          (click)="scrollTo('urgence')"
+          class="btn btn-secondary"
+          >Urgences</a
+        >
+        <a routerLink="/rendez-vous" class="btn btn-primary">Prendre RDV</a>
+      </div>
+
+      <button class="mobile-menu-btn" (click)="toggleMobileMenu()">☰</button>
+    </nav>
+  </div>
+</header>
+
+<!-- HERO SECTION URGENCE -->
+<section class="hero hero-hospital" id="accueil">
+  <div class="container">
+    <div class="hero-content">
+      <div class="hero-text animate-fade-in-up">
+        <div class="urgence-alert">
+          <span class="urgence-badge">Service d'Urgences 24h/24</span>
+        </div>
+        <h1>Hôpital SamaCarnet</h1>
+        <span class="hero-subtitle">Excellence Médicale & Innovation</span>
+        <p>
+          Établissement de santé de référence au Sénégal, alliant expertise
+          médicale, technologie de pointe et prise en charge humaine.
+        </p>
+        <div class="btn-group">
+          <button
+            (click)="onEmergencyClick()"
+            class="btn btn-primary btn-large btn-urgence"
+          >
+            <span class="btn-icon">🚑</span>
+            Urgence Médicale
+          </button>
+          <a routerLink="/rendez-vous" class="btn btn-secondary"
+            >Prendre Rendez-vous</a
+          >
+        </div>
+        <div class="hospital-stats">
+          <div class="stat-item" *ngFor="let stat of hospitalStats">
+            <div class="stat-number">{{ stat.number }}</div>
+            <div class="stat-label">{{ stat.label }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-image animate-fade-in-up">
+        <img
+          src="../assets/images/hopital-exterieur.jpg"
+          alt="Hôpital SamaCarnet"
+        />
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- URGENCE RAPIDE -->
+<section class="urgence-rapide" id="urgence">
+  <div class="container">
+    <div class="urgence-grid">
+      <div class="urgence-card urgence-vitale">
+        <div class="urgence-icon">🚨</div>
+        <h3>Urgence Vitale</h3>
+        <p>Appelez immédiatement le</p>
+        <a href="tel:1515" class="urgence-phone">15 15</a>
+        <p class="urgence-desc">Accident, malaise, douleur thoracique</p>
+      </div>
+
+      <div class="urgence-card urgence-medicale">
+        <div class="urgence-icon">🏥</div>
+        <h3>Urgence Médicale</h3>
+        <p>Service d'urgences</p>
+        <a href="tel:+221771234567" class="urgence-phone">77 123 45 67</a>
+        <p class="urgence-desc">Prise en charge immédiate</p>
+      </div>
+
+      <div class="urgence-card consultation-rapide">
+        <div class="urgence-icon">📅</div>
+        <h3>Consultation Rapide</h3>
+        <p>Rendez-vous sous 24h</p>
+        <a routerLink="/rendez-vous" class="btn btn-primary"
+          >Réserver en ligne</a
+        >
+        <p class="urgence-desc">Avec nos spécialistes</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES HOSPITALIERS -->
+<section class="services hospital-services" id="services">
+  <div class="container">
+    <h2 class="scroll-reveal">Nos Services Hospitaliers</h2>
+    <p class="section-subtitle scroll-reveal">
+      Des soins spécialisés dans tous les domaines de la médecine
+    </p>
+
+    <div class="services-grid">
+      <div class="service-card scroll-reveal" *ngFor="let service of services">
+        <div class="service-icon">
+          <img [src]="service.icon" [alt]="service.name" />
+        </div>
+        <h3>{{ service.name }}</h3>
+        <p>{{ service.description }}</p>
+        <div class="service-meta">
+          <span class="meta-item" *ngFor="let meta of service.meta">{{
+            meta
+          }}</span>
+        </div>
+        <a [routerLink]="service.route" class="btn btn-primary"
+          >En savoir plus</a
+        >
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DÉPARTEMENTS SPÉCIALISÉS -->
+<section class="departements" id="departements">
+  <div class="container">
+    <h2 class="scroll-reveal">Départements Spécialisés</h2>
+    <p class="section-subtitle scroll-reveal">
+      Une expertise médicale dans toutes les spécialités
+    </p>
+
+    <div class="departements-grid">
+      <div
+        class="departement-card scroll-reveal"
+        *ngFor="let department of departments"
+      >
+        <h3>{{ department.name }}</h3>
+        <ul class="departement-list">
+          <li *ngFor="let item of department.services">{{ item }}</li>
+        </ul>
+        <a [routerLink]="department.route" class="btn-link">Découvrir →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ÉQUIPE MÉDICALE -->
+<section class="equipe-medicale" id="equipe">
+  <div class="container">
+    <h2 class="scroll-reveal">Notre Équipe Médicale</h2>
+    <p class="section-subtitle scroll-reveal">
+      Des professionnels de santé dévoués à votre bien-être
+    </p>
+
+    <div class="equipe-grid">
+      <div class="medecin-card scroll-reveal" *ngFor="let doctor of doctors">
+        <div class="medecin-photo">
+          <img [src]="doctor.photo" [alt]="doctor.name" />
+        </div>
+        <div class="medecin-info">
+          <h3>{{ doctor.name }}</h3>
+          <p class="specialite">{{ doctor.specialty }}</p>
+          <p class="experience">{{ doctor.experience }}</p>
+          <div class="medecin-meta">
+            <span class="meta-badge" *ngFor="let badge of doctor.badges">{{
+              badge
+            }}</span>
+          </div>
+          <a [routerLink]="doctor.route" class="btn btn-primary">Prendre RDV</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center" style="margin-top: 40px">
+      <a routerLink="/equipe" class="btn btn-secondary">Voir toute l'équipe</a>
+    </div>
+  </div>
+</section>
+
+<!-- TECHNOLOGIES & INNOVATION -->
+<section class="technologies">
+  <div class="container">
+    <h2 class="scroll-reveal">Technologies & Innovation</h2>
+    <p class="section-subtitle scroll-reveal">
+      Des équipements médicaux de dernière génération
+    </p>
+
+    <div class="tech-grid">
+      <div class="tech-card scroll-reveal" *ngFor="let tech of technologies">
+        <div class="tech-icon">{{ tech.icon }}</div>
+        <h3>{{ tech.name }}</h3>
+        <p>{{ tech.description }}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TÉMOIGNAGES PATIENTS -->
+<section class="testimonials patient-testimonials">
+  <div class="container">
+    <h2 class="scroll-reveal">Témoignages de Patients</h2>
+    <p class="section-subtitle scroll-reveal">
+      Ce que nos patients disent de leur expérience
+    </p>
+
+    <div class="testimonial-cards">
+      <div
+        class="testimonial-card scroll-reveal"
+        *ngFor="let testimonial of testimonials"
+      >
+        <div class="testimonial-text">"{{ testimonial.text }}"</div>
+        <div class="testimonial-author">
+          <div class="author-avatar">
+            <img [src]="testimonial.avatar" [alt]="testimonial.author" />
+          </div>
+          <div class="author-info">
+            <h4>{{ testimonial.author }}</h4>
+            <p>{{ testimonial.service }}</p>
+            <div class="rating">⭐⭐⭐⭐⭐</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- URGENCES & CONTACT -->
+<section class="urgence-contact" id="contact">
+  <div class="container">
+    <div class="contact-grid">
+      <div class="contact-info scroll-reveal">
+        <h2>Contacts & Urgences</h2>
+
+        <div class="contact-item">
+          <h3>🚨 Urgences Vitales</h3>
+          <a href="tel:1515" class="contact-phone emergency">15 15</a>
+          <p>Service d'urgence 24h/24</p>
+        </div>
+
+        <div class="contact-item">
+          <h3>🏥 Urgences Médicales</h3>
+          <a href="tel:+221771234567" class="contact-phone">77 123 45 67</a>
+          <p>Accueil des urgences</p>
+        </div>
+
+        <div class="contact-item">
+          <h3>📅 Rendez-vous</h3>
+          <a href="tel:+221771234568" class="contact-phone">77 123 45 68</a>
+          <p>Du lundi au samedi, 7h-19h</p>
+        </div>
+
+        <div class="contact-item">
+          <h3>📧 Informations</h3>
+          <a href="mailto:contactsamacarnet.sn" class="contact-email"
+            >contactsamacarnet.sn</a
+          >
+          <p>Renseignements généraux</p>
+        </div>
+      </div>
+
+      <div class="contact-form scroll-reveal">
+        <h3>Demande d'Information</h3>
+        <form [formGroup]="contactForm" (ngSubmit)="onSubmit()">
+          <div class="form-group">
+            <input
+              type="text"
+              formControlName="name"
+              placeholder="Votre nom complet"
+              [class.error]="name?.invalid && name?.touched"
+            />
+            <div class="form-error" *ngIf="name?.invalid && name?.touched">
+              <span *ngIf="name?.errors?.['required']">Le nom est requis</span>
+              <span *ngIf="name?.errors?.['minlength']"
+                >Minimum 2 caractères</span
+              >
+            </div>
+          </div>
+
+          <div class="form-group">
+            <input
+              type="tel"
+              formControlName="phone"
+              placeholder="Votre téléphone"
+              [class.error]="phone?.invalid && phone?.touched"
+            />
+            <div class="form-error" *ngIf="phone?.invalid && phone?.touched">
+              <span *ngIf="phone?.errors?.['required']"
+                >Le téléphone est requis</span
+              >
+              <span *ngIf="phone?.errors?.['pattern']">Format invalide</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <input
+              type="email"
+              formControlName="email"
+              placeholder="Votre email"
+              [class.error]="email?.invalid && email?.touched"
+            />
+            <div class="form-error" *ngIf="email?.invalid && email?.touched">
+              <span *ngIf="email?.errors?.['required']"
+                >L'email est requis</span
+              >
+              <span *ngIf="email?.errors?.['email']">Email invalide</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <select
+              formControlName="service"
+              [class.error]="service?.invalid && service?.touched"
+            >
+              <option value="">Sélectionnez un service</option>
+              <option value="urgence">Urgences</option>
+              <option value="rdv">Rendez-vous</option>
+              <option value="info">Informations générales</option>
+              <option value="autre">Autre</option>
+            </select>
+            <div
+              class="form-error"
+              *ngIf="service?.invalid && service?.touched"
+            >
+              <span *ngIf="service?.errors?.['required']"
+                >Veuillez sélectionner un service</span
+              >
+            </div>
+          </div>
+
+          <div class="form-group">
+            <textarea
+              formControlName="message"
+              placeholder="Votre message"
+              rows="4"
+              [class.error]="message?.invalid && message?.touched"
+            ></textarea>
+            <div
+              class="form-error"
+              *ngIf="message?.invalid && message?.touched"
+            >
+              <span *ngIf="message?.errors?.['required']"
+                >Le message est requis</span
+              >
+              <span *ngIf="message?.errors?.['minlength']"
+                >Minimum 10 caractères</span
+              >
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="!contactForm.valid"
+          >
+            Envoyer la demande
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER HÔPITAL -->
+<footer class="hospital-footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-column">
+        <h3>Hôpital SamaCarnet</h3>
+        <p>
+          Établissement de santé de référence au Sénégal, offrant des soins
+          médicaux de qualité avec compassion et innovation.
+        </p>
+        <div class="hospital-certifications">
+          <span class="certification-badge">🏅 Certification Qualité</span>
+          <span class="certification-badge">⭐ Excellence Médicale</span>
+        </div>
+      </div>
+
+      <div class="footer-column">
+        <h3>Services Médicaux</h3>
+        <ul class="footer-links">
+          <li><a routerLink="/service/urgences">Urgences 24h/24</a></li>
+          <li><a routerLink="/service/chirurgie">Chirurgie</a></li>
+          <li><a routerLink="/service/maternite">Maternité</a></li>
+          <li><a routerLink="/service/cardiologie">Cardiologie</a></li>
+          <li><a routerLink="/service/pediatrie">Pédiatrie</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-column">
+        <h3>Informations Pratiques</h3>
+        <ul class="footer-links">
+          <li><a routerLink="/visiteurs">Informations visiteurs</a></li>
+          <li><a routerLink="/admission">Admission</a></li>
+          <li><a routerLink="/tarifs">Tarifs & Mutuelles</a></li>
+          <li><a routerLink="/acces">Plan d'accès</a></li>
+          <li><a routerLink="/parking">Parking</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-column">
+        <h3>Contact & Urgences</h3>
+        <div class="footer-contact">
+          <p><strong>📍 Adresse</strong><br />Route de l'Aéroport, Dakar</p>
+          <p><strong>🚨 Urgences</strong><br />15 15 / 77 123 45 67</p>
+          <p><strong>📅 Rendez-vous</strong><br />77 123 45 68</p>
+          <p><strong>📧 Email</strong><br />contactsamacarnet.sn</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>
+        &copy; 2024 Hôpital SamaCarnet - Tous droits réservés. |
+        <a routerLink="/mentions-legales">Mentions légales</a> |
+        <a routerLink="/confidentialite">Politique de confidentialité</a> |
+        <a routerLink="/charte-patients">Chartre des patients</a>
+      </p>
+      <div class="footer-social">
+        <span>Suivez-nous :</span>
+        <a href="#">Facebook</a>
+        <a href="#">Twitter</a>
+        <a href="#">LinkedIn</a>
+      </div>
+    </div>
+  </div>
+</footer>

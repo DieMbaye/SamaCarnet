@@ -1,196 +1,257 @@
-<div class="admin-dashboard">
-    <div class="dashboard-header">
-        <h1>Tableau de bord administrateur</h1>
-        <p>Gérez les utilisateurs et consultez les statistiques</p>
+<div class="admin-container">
+  <!-- Sidebar réutilisable -->
+  <app-sidebar
+    [isSidebarCollapsed]="isSidebarCollapsed"
+    [isMobileOpen]="isMobileOpen"
+    [activeSection]="activeSection"
+    [currentUser]="currentUser"
+    (sectionChange)="onSectionChange($event)"
+    (toggleSidebar)="onToggleSidebar()"
+    (toggleMobileSidebar)="onToggleMobileSidebar()"
+    (logout)="onLogout()"
+  ></app-sidebar>
+
+  <!-- Overlay pour mobile -->
+  <div
+    class="sidebar-overlay"
+    [class.active]="isMobileOpen"
+    (click)="onToggleMobileSidebar()"
+  ></div>
+
+  <!-- Main Content -->
+  <main class="admin-main" [class.expanded]="isSidebarCollapsed">
+    <!-- Header mobile (uniquement sur mobile) -->
+    <div class="mobile-header" *ngIf="isMobileOpen">
+      <button
+        class="mobile-toggle"
+        (click)="onToggleMobileSidebar()"
+        aria-label="Toggle Sidebar"
+      >
+        <i class="fas fa-bars"></i>
+      </button>
+      <h1>{{ getSectionTitle(activeSection) }}</h1>
     </div>
 
-    <!-- Cartes de statistiques -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-icon">👥</div>
+    <!-- Dashboard Section -->
+    <section *ngIf="activeSection === 'dashboard'" class="section-content">
+      <div class="dashboard-section">
+        <div class="dashboard-header">
+          <h1>Tableau de bord administrateur</h1>
+          <p>Vue d'ensemble de votre application médicale</p>
+        </div>
+        
+        <!-- Cartes de statistiques principales -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon primary">
+              <i class="fas fa-users"></i>
+            </div>
             <div class="stat-info">
-                <h3>{{ statistics.totalUsers }}</h3>
-                <p>Utilisateurs total</p>
+              <h3>{{ statistics.totalUsers }}</h3>
+              <p>Utilisateurs total</p>
             </div>
-        </div>
+          </div>
 
-        <div class="stat-card">
-            <div class="stat-icon">👨‍⚕️</div>
+          <div class="stat-card">
+            <div class="stat-icon secondary">
+              <i class="fas fa-user-md"></i>
+            </div>
             <div class="stat-info">
-                <h3>{{ statistics.totalDoctors }}</h3>
-                <p>Médecins</p>
+              <h3>{{ statistics.totalDoctors }}</h3>
+              <p>Médecins</p>
             </div>
-        </div>
+          </div>
 
-        <div class="stat-card">
-            <div class="stat-icon">🏥</div>
+          <div class="stat-card">
+            <div class="stat-icon success">
+              <i class="fas fa-procedures"></i>
+            </div>
             <div class="stat-info">
-                <h3>{{ statistics.totalPatients }}</h3>
-                <p>Patients</p>
+              <h3>{{ statistics.totalPatients }}</h3>
+              <p>Patients</p>
             </div>
-        </div>
+          </div>
 
-        <div class="stat-card">
-            <div class="stat-icon">📊</div>
+          <div class="stat-card">
+            <div class="stat-icon warning">
+              <i class="fas fa-stethoscope"></i>
+            </div>
             <div class="stat-info">
-                <h3>{{ Object.keys(statistics.specialities).length }}</h3>
-                <p>Spécialités</p>
+              <h3>{{ Object.keys(statistics.specialities).length }}</h3>
+              <p>Spécialités</p>
             </div>
-        </div>
-    </div>
-    <!-- Diagrammes -->
-    <div class="charts-section">
-  <h2>Statistiques visuelles</h2>
+          </div>
 
-  <div class="charts-grid">
-    <!-- Graphique camembert -->
-    <div class="chart-card">
-      <h3>Répartition des rôles</h3>
-      <div class="chart-container">
-        <canvas baseChart
-                [data]="roleChartData"
-                [labels]="roleChartLabels"
-                [type]="roleChartType"
-                [options]="chartOptions">
-        </canvas>
-      </div>
-    </div>
-
-    <!-- Graphique barres -->
-    <div class="chart-card">
-      <h3>Médecins par spécialité</h3>
-      <div class="chart-container">
-        <canvas baseChart
-                [data]="specialityChartData"
-                [labels]="specialityChartLabels"
-                [type]="specialityChartType"
-                [options]="chartOptions">
-        </canvas>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-    <!-- Spécialités -->
-    <div class="specialities-section">
-        <h2>Répartition par spécialité</h2>
-        <div class="specialities-grid">
-            <div *ngFor="let speciality of Object.keys(statistics.specialities)" class="speciality-card">
-                <h4>{{ speciality }}</h4>
-                <span class="speciality-count">{{ statistics.specialities[speciality] }} médecin(s)</span>
+          <div class="stat-card">
+            <div class="stat-icon info">
+              <i class="fas fa-calendar-day"></i>
             </div>
-        </div>
-    </div>
+            <div class="stat-info">
+              <h3>{{ quickStats.appointmentsToday }}</h3>
+              <p>RDV aujourd'hui</p>
+            </div>
+          </div>
 
-    <!-- Gestion des utilisateurs -->
-    <div class="users-section">
-        <div class="section-header">
-            <h2>Gestion des utilisateurs</h2>
-            <button class="add-btn" (click)="showAddUserForm = true">
-                Ajouter un utilisateur
+          <div class="stat-card">
+            <div class="stat-icon accent">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-info">
+              <h3>{{ quickStats.activeAppointments }}</h3>
+              <p>RDV actifs</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions rapides -->
+        <div class="quick-actions">
+          <div class="section-header">
+            <h2>Actions rapides</h2>
+          </div>
+          <div class="actions-list">
+            <button
+              class="action-btn primary"
+              (click)="setActiveSection('users')"
+            >
+              <i class="fas fa-user-plus"></i>
+              <span>Gérer les utilisateurs</span>
             </button>
+            <button
+              class="action-btn secondary"
+              (click)="setActiveSection('appointments')"
+            >
+              <i class="fas fa-calendar-plus"></i>
+              <span>Voir les rendez-vous</span>
+            </button>
+            <button
+              class="action-btn success"
+              (click)="setActiveSection('reports')"
+            >
+              <i class="fas fa-chart-line"></i>
+              <span>Analyser les rapports</span>
+            </button>
+            <button class="action-btn warning" (click)="exportData()">
+              <i class="fas fa-download"></i>
+              <span>Exporter les données</span>
+            </button>
+          </div>
         </div>
 
-        <!-- Formulaire d'ajout d'utilisateur -->
-        <div class="add-user-form" *ngIf="showAddUserForm">
-            <h3>Ajouter un nouvel utilisateur</h3>
-            <form (ngSubmit)="addUser()" class="user-form">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" [(ngModel)]="newUser.email" name="email" required class="form-input">
-                    </div>
+        <!-- Graphiques principaux -->
+        <div class="charts-section">
+          <div class="section-header">
+            <h2>Statistiques visuelles</h2>
+          </div>
+          <div class="charts-grid">
+            <!-- Graphique répartition des rôles -->
+            <div class="chart-card">
+              <h3>Répartition des utilisateurs</h3>
+              <div class="chart-container">
+                <canvas
+                  baseChart
+                  [data]="roleChartData"
+                  [labels]="roleChartLabels"
+                  [type]="roleChartType"
+                  [options]="chartOptions"
+                >
+                </canvas>
+              </div>
+            </div>
 
-                    <div class="form-group">
-                        <label>Nom complet</label>
-                        <input type="text" [(ngModel)]="newUser.displayName" name="displayName" required
-                            class="form-input">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Mot de passe</label>
-                        <input type="password" [(ngModel)]="newUser.password" name="password" required
-                            class="form-input" placeholder="Mot de passe">
-                    </div>
-                </div>
+            <!-- Graphique spécialités -->
+            <div class="chart-card">
+              <h3>Médecins par spécialité</h3>
+              <div class="chart-container">
+                <canvas
+                  baseChart
+                  [data]="specialityChartData"
+                  [labels]="specialityChartLabels"
+                  [type]="specialityChartType"
+                  [options]="chartOptions"
+                >
+                </canvas>
+              </div>
+            </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Rôle</label>
-                        <select [(ngModel)]="newUser.role" name="role" required class="form-select">
-                            <option value="patient">Patient</option>
-                            <option value="medecin">Médecin</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group" *ngIf="newUser.role === 'medecin'">
-                        <label>Spécialité</label>
-                        <select [(ngModel)]="newUser.speciality" name="speciality" class="form-select">
-                            <option value="Cardiologie">Cardiologie</option>
-                            <option value="Dermatologie">Dermatologie</option>
-                            <option value="Pédiatrie">Pédiatrie</option>
-                            <option value="Neurologie">Neurologie</option>
-                            <option value="Orthopédie">Orthopédie</option>
-                            <option value="Gynécologie">Gynécologie</option>
-                            <option value="Psychiatrie">Psychiatrie</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-actions">
-                    <button type="submit" class="submit-btn" [disabled]="isLoading">
-                        {{ isLoading ? 'Ajout...' : 'Ajouter' }}
-                    </button>
-                    <button type="button" class="cancel-btn" (click)="cancelAddUser()">
-                        Annuler
-                    </button>
-                </div>
-            </form>
+            <!-- Graphique activité récente -->
+            <div class="chart-card full-width">
+              <h3>Activité des rendez-vous (7 derniers jours)</h3>
+              <div class="chart-container">
+                <canvas
+                  baseChart
+                  [data]="activityChartData"
+                  [labels]="activityChartLabels"
+                  [type]="activityChartType"
+                  [options]="activityChartOptions"
+                >
+                </canvas>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- Liste des utilisateurs -->
-       <!-- ... le début de ton code HTML est inchangé -->
-
-<!-- Liste des utilisateurs -->
-<div class="users-list">
-  <div class="users-filters">
-    <select [(ngModel)]="selectedRoleFilter" (change)="filterUsers()" class="filter-select">
-      <option value="">Tous les rôles</option>
-      <option value="admin">Administrateur</option>
-      <option value="medecin">Médecin</option>
-      <option value="patient">Patient</option>
-    </select>
-  </div>
-
-  <div class="users-table">
-    <div class="table-header">
-      <div class="header-cell">Nom</div>
-      <div class="header-cell">Email</div>
-      <div class="header-cell">Rôle</div>
-      <div class="header-cell">Spécialité</div>
-    </div>
-
-  <div *ngFor="let user of paginatedUsers" class="table-row">
-      <div class="table-cell">{{ user.displayName }}</div>
-      <div class="table-cell">{{ user.email }}</div>
-      <div class="table-cell">
-        <span class="role-badge" [class]="'role-' + user.role">
-          {{ getRoleDisplay(user.role) }}
-        </span>
+        <!-- Rendez-vous récents et actions rapides -->
+        <div class="quick-actions-section">
+          <div class="actions-grid">
+            <!-- Rendez-vous récents -->
+            <div class="recent-appointments">
+              <div class="section-header">
+                <h2>Rendez-vous à venir</h2>
+                <button class="view-all-btn" (click)="viewAllAppointments()">
+                  Voir tout
+                </button>
+              </div>
+              <div class="appointments-list">
+                <div
+                  *ngFor="let appointment of recentAppointments"
+                  class="appointment-card"
+                >
+                  <div class="appointment-info">
+                    <div class="patient-name">
+                      {{ appointment.patientName }}
+                    </div>
+                    <div class="doctor-name">
+                      Dr. {{ appointment.doctorName }}
+                    </div>
+                    <div class="appointment-time">
+                      {{ getFormattedDate(appointment.date) }} à
+                      {{ appointment.time }}
+                    </div>
+                  </div>
+                  <div
+                    class="appointment-status"
+                    [class]="'status-' + appointment.status"
+                  >
+                    {{ getStatusDisplay(appointment.status) }}
+                  </div>
+                </div>
+                <div *ngIf="recentAppointments.length === 0" class="no-data">
+                  Aucun rendez-vous à venir
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="table-cell">{{ user.speciality || '-' }}</div>
-    </div>
-  </div>
+    </section>
 
-  <!-- Pagination -->
-  <div class="pagination-controls">
-<button (click)="prevPage()" [disabled]="currentPage === 1">Précédent</button>
-    <span>Page {{ currentPage }} / {{ totalPages }}</span>
-    <button (click)="nextPage()" [disabled]="currentPage === totalPages">Suivant</button>
-  </div>
-</div>
+    <!-- Autres sections -->
+    <section *ngIf="activeSection === 'users'" class="section-content">
+      <app-users-management></app-users-management>
+    </section>
 
-    </div>
+    <section *ngIf="activeSection === 'appointments'" class="section-content">
+      <app-appointments-management></app-appointments-management>
+    </section>
+
+    <section *ngIf="activeSection === 'reports'" class="section-content">
+      <app-reports></app-reports>
+    </section>
+
+    <!-- Ajouter d'autres sections selon les menus -->
+    <section *ngIf="activeSection === 'settings'" class="section-content">
+      <h2>Paramètres système</h2>
+      <p>Section des paramètres en cours de développement...</p>
+    </section>
+  </main>
 </div>

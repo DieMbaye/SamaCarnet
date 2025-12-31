@@ -1,0 +1,851 @@
+<div class="users-management">
+  <!-- En-tête avec statistiques -->
+  <div class="management-header">
+    <div class="header-content">
+      <div class="header-text">
+        <h1>Gestion des Utilisateurs</h1>
+        <p>Administrez et gérez tous les utilisateurs de la plateforme</p>
+      </div>
+      <div class="header-actions">
+        <button
+          class="btn btn-export"
+          (click)="exportUsers()"
+          title="Exporter les données"
+        >
+          <i class="fas fa-download"></i>
+          Exporter
+        </button>
+        <button class="btn btn-primary" (click)="addUser()">
+          <i class="fas fa-user-plus"></i>
+          Nouvel utilisateur
+        </button>
+      </div>
+    </div>
+
+    <!-- Cartes de statistiques -->
+    <div class="stats-cards">
+      <div class="stat-card">
+        <div class="stat-icon total">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ userStats.total }}</h3>
+          <p>Total Utilisateurs</p>
+        </div>
+        <div class="stat-trend">
+          <i class="fas fa-chart-line"></i>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon admins">
+          <i class="fas fa-user-shield"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ userStats.admins }}</h3>
+          <p>Administrateurs</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon doctors">
+          <i class="fas fa-user-md"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ userStats.doctors }}</h3>
+          <p>Médecins</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon patients">
+          <i class="fas fa-user-injured"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ userStats.patients }}</h3>
+          <p>Patients</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon active">
+          <i class="fas fa-user-check"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ userStats.active }}</h3>
+          <p>Utilisateurs Actifs</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon inactive">
+          <i class="fas fa-user-slash"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ userStats.inactive }}</h3>
+          <p>Utilisateurs Inactifs</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon verified">
+          <i class="fas fa-envelope"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ userStats.verified }}</h3>
+          <p>Emails Vérifiés</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon unverified">
+          <i class="fas fa-envelope-open"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ userStats.unverified }}</h3>
+          <p>Emails Non Vérifiés</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contrôles de gestion -->
+  <div class="management-controls">
+    <div class="controls-grid">
+      <!-- Barre de recherche -->
+      <div class="control-group search-group">
+        <label>Recherche</label>
+        <div class="search-container">
+          <i class="fas fa-search search-icon"></i>
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (input)="applyFilters()"
+            placeholder="Rechercher un utilisateur..."
+            class="search-input"
+          />
+          <div class="search-actions">
+            <button
+              class="btn-search"
+              (click)="applyFilters()"
+              title="Rechercher"
+            >
+              <i class="fas fa-search"></i>
+            </button>
+            <button
+              *ngIf="searchTerm"
+              class="btn-clear"
+              (click)="searchTerm = ''; applyFilters()"
+              title="Effacer"
+            >
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtre par rôle -->
+      <div class="control-group compact">
+        <label>Rôle</label>
+        <select
+          [(ngModel)]="selectedRole"
+          (change)="applyFilters()"
+          class="control-select"
+        >
+          <option value="">Tous les rôles</option>
+          <option value="admin">Administrateurs</option>
+          <option value="medecin">Médecins</option>
+          <option value="patient">Patients</option>
+        </select>
+      </div>
+
+      <!-- Filtre par statut -->
+      <div class="control-group compact">
+        <label>Statut</label>
+        <select
+          [(ngModel)]="selectedStatus"
+          (change)="applyFilters()"
+          class="control-select"
+        >
+          <option value="">Tous les statuts</option>
+          <option value="active">Actifs</option>
+          <option value="inactive">Inactifs</option>
+        </select>
+      </div>
+
+      <!-- Items par page -->
+      <div class="control-group compact">
+        <label>Affichage</label>
+        <select
+          [(ngModel)]="itemsPerPage"
+          (change)="currentPage = 1; applyFilters()"
+          class="control-select"
+        >
+          <option value="5">5/page</option>
+          <option value="10">10/page</option>
+          <option value="20">20/page</option>
+          <option value="50">50/page</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Actions et vue -->
+    <div class="action-buttons">
+      <button class="btn btn-outline" (click)="toggleAdvancedFilters()">
+        <i class="fas fa-filter"></i>
+        Filtres
+      </button>
+
+      <button
+        class="btn btn-outline"
+        (click)="clearFilters()"
+        *ngIf="hasActiveFilters"
+        title="Réinitialiser les filtres"
+      >
+        <i class="fas fa-times"></i>
+        Effacer
+      </button>
+
+      <button class="btn btn-primary" (click)="$any(this)['exportData']()">
+        <i class="fas fa-download"></i>
+        Exporter
+      </button>
+    </div>
+
+    <!-- Options de vue -->
+    <div class="view-options">
+      <span class="results-count">
+        {{ filteredUsers.length }} résultat(s)
+      </span>
+
+      <div class="view-toggle">
+        <button
+          class="view-btn {{ viewMode === 'table' ? 'active' : '' }}"
+          (click)="viewMode = 'table'"
+          title="Vue tableau"
+        >
+          <i class="fas fa-table"></i>
+        </button>
+        <button
+          class="view-btn {{ viewMode === 'cards' ? 'active' : '' }}"
+          (click)="viewMode = 'cards'"
+          title="Vue cartes"
+        >
+          <i class="fas fa-th-large"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres avancés (optionnel) -->
+  <div *ngIf="showAdvancedFilters" class="advanced-filters">
+    <div class="filters-header">
+      <h3>Filtres avancés</h3>
+      <button class="btn btn-outline" (click)="toggleAdvancedFilters()">
+        <i class="fas fa-times"></i>
+        Fermer
+      </button>
+    </div>
+    <div class="filters-grid">
+      <div class="control-group">
+        <label>Date de création</label>
+        <input type="date" class="control-input" placeholder="Depuis le..." />
+      </div>
+      <div class="control-group">
+        <label>Spécialité</label>
+        <select class="control-select">
+          <option>Toutes les spécialités</option>
+          <option>Cardiologie</option>
+          <option>Dermatologie</option>
+          <option>Pédiatrie</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Tri par</label>
+        <select class="control-select">
+          <option>Date de création</option>
+          <option>Nom A-Z</option>
+          <option>Nom Z-A</option>
+          <option>Dernière activité</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres avancés -->
+  <div class="advanced-filters" *ngIf="showAdvancedFilters">
+    <div class="filters-grid">
+      <div class="form-group">
+        <label for="dateFilter">Date d'inscription après le</label>
+        <input
+          type="date"
+          id="dateFilter"
+          [(ngModel)]="dateFilter"
+          (change)="applyFilters()"
+          class="form-input"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="specialityFilter">Spécialité</label>
+        <select
+          id="specialityFilter"
+          [(ngModel)]="specialityFilter"
+          (change)="applyFilters()"
+          class="form-select"
+        >
+          <option value="">Toutes les spécialités</option>
+          <option *ngFor="let spec of specialities" [value]="spec">
+            {{ spec }}
+          </option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulaire utilisateur -->
+  <div *ngIf="showUserForm" class="modal-overlay">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h2>
+          {{
+            editingUser
+              ? "Modifier l'utilisateur"
+              : "Créer un nouvel utilisateur"
+          }}
+        </h2>
+        <button class="btn-close" (click)="cancelForm()" aria-label="Fermer">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <form (ngSubmit)="saveUser()" class="user-form">
+        <div class="form-grid">
+          <!-- Informations de base -->
+          <div class="form-group">
+            <label for="email">Adresse Email *</label>
+            <input
+              type="email"
+              id="email"
+              [(ngModel)]="newUser.email"
+              name="email"
+              required
+              [disabled]="!!editingUser"
+              class="form-input"
+              placeholder="exemple@email.com"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="displayName">Nom Complet *</label>
+            <input
+              type="text"
+              id="displayName"
+              [(ngModel)]="newUser.displayName"
+              name="displayName"
+              required
+              class="form-input"
+              placeholder="Jean Dupont"
+            />
+          </div>
+
+          <!-- Mot de passe (seulement pour la création) -->
+          <div class="form-group" *ngIf="!editingUser">
+            <label for="password">Mot de Passe *</label>
+            <input
+              type="password"
+              id="password"
+              [(ngModel)]="newUser.password"
+              name="password"
+              required
+              class="form-input"
+              placeholder="●●●●●●●●"
+              minlength="6"
+            />
+            <small class="form-hint">Minimum 6 caractères</small>
+          </div>
+
+          <!-- Rôle et spécialité -->
+          <div class="form-group">
+            <label for="role">Rôle *</label>
+            <select
+              id="role"
+              [(ngModel)]="newUser.role"
+              name="role"
+              required
+              (change)="onRoleChange()"
+              class="form-select"
+            >
+              <option value="patient">Patient</option>
+              <option value="medecin">Médecin</option>
+              <option value="admin">Administrateur</option>
+            </select>
+          </div>
+
+          <div class="form-group" *ngIf="newUser.role === 'medecin'">
+            <label for="speciality">Spécialité *</label>
+            <select
+              id="speciality"
+              [(ngModel)]="newUser.speciality"
+              name="speciality"
+              required
+              class="form-select"
+            >
+              <option value="">Choisir une spécialité</option>
+              <option *ngFor="let spec of specialities" [value]="spec">
+                {{ spec }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Informations supplémentaires -->
+          <div class="form-group">
+            <label for="phone">Téléphone</label>
+            <input
+              type="tel"
+              id="phone"
+              [(ngModel)]="newUser.phone"
+              name="phone"
+              class="form-input"
+              placeholder="+33 1 23 45 67 89"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="birthDate">Date de Naissance</label>
+            <input
+              type="date"
+              id="birthDate"
+              [(ngModel)]="newUser.birthDate"
+              name="birthDate"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group full-width">
+            <label for="address">Adresse</label>
+            <textarea
+              id="address"
+              [(ngModel)]="newUser.address"
+              name="address"
+              class="form-textarea"
+              placeholder="Adresse complète..."
+              rows="3"
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="cancelForm()"
+          >
+            Annuler
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="isLoading">
+            <i class="fas fa-spinner fa-spin" *ngIf="isLoading"></i>
+            {{ editingUser ? "Modifier" : "Créer" }} l'utilisateur
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Informations détaillées -->
+  <div *ngIf="showInfoModal" class="modal-overlay">
+    <div class="modal-container info-modal">
+      <div class="modal-header">
+        <h2>Informations détaillées</h2>
+        <button
+          class="btn-close"
+          (click)="closeInfoModal()"
+          aria-label="Fermer"
+        >
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="info-content" *ngIf="selectedUser">
+        <div class="info-header">
+          <div class="user-avatar-large">
+            {{
+              selectedUser.displayName
+                ? selectedUser.displayName.charAt(0).toUpperCase()
+                : "U"
+            }}
+          </div>
+          <div class="user-main-info">
+            <h3 class="user-name">
+              {{ selectedUser.displayName || "Non renseigné" }}
+            </h3>
+            <p class="user-email">{{ selectedUser.email }}</p>
+            <div class="user-badges">
+              <span class="role-badge" [class]="'role-' + selectedUser.role">
+                {{ getRoleDisplay(selectedUser.role) }}
+              </span>
+              <span class="status-badge" [class]="getStatusClass(selectedUser)">
+                {{ getStatusDisplay(selectedUser) }}
+              </span>
+              <span
+                class="status-badge"
+                [class]="getVerificationClass(selectedUser)"
+              >
+                {{ getVerificationStatus(selectedUser) }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-section">
+            <h4>Informations personnelles</h4>
+            <div class="info-item">
+              <label>Email :</label>
+              <span>{{ selectedUser.email }}</span>
+            </div>
+            <div class="info-item">
+              <label>Téléphone :</label>
+              <span>{{ selectedUser.phone || "Non renseigné" }}</span>
+            </div>
+            <div class="info-item">
+              <label>Date de naissance :</label>
+              <span>{{
+                selectedUser.birthDate
+                  ? getFormattedDate(selectedUser.birthDate)
+                  : "Non renseignée"
+              }}</span>
+            </div>
+          </div>
+
+          <div class="info-section">
+            <h4>Informations professionnelles</h4>
+            <div class="info-item">
+              <label>Rôle :</label>
+              <span>{{ getRoleDisplay(selectedUser.role) }}</span>
+            </div>
+            <div class="info-item" *ngIf="selectedUser.speciality">
+              <label>Spécialité :</label>
+              <span>{{ selectedUser.speciality }}</span>
+            </div>
+            <div class="info-item">
+              <label>Date d'inscription :</label>
+              <span>{{ getFormattedDate(selectedUser.createdAt) }}</span>
+            </div>
+            <div class="info-item">
+              <label>Statut du compte :</label>
+              <span>{{ getStatusDisplay(selectedUser) }}</span>
+            </div>
+          </div>
+
+          <div class="info-section full-width" *ngIf="selectedUser.address">
+            <h4>Adresse</h4>
+            <div class="info-item">
+              <label>Adresse complète :</label>
+              <span>{{ selectedUser.address }}</span>
+            </div>
+          </div>
+
+          <div class="info-section full-width">
+            <h4>Identifiant technique</h4>
+            <div class="info-item">
+              <label>ID utilisateur :</label>
+              <span class="user-id">{{ selectedUser.uid }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-actions">
+          <button class="btn btn-secondary" (click)="closeInfoModal()">
+            Fermer
+          </button>
+          <button class="btn btn-primary" (click)="editUser(selectedUser)">
+            <i class="fas fa-edit"></i>
+            Modifier
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenu principal -->
+  <div class="users-content">
+    <!-- Vue Tableau -->
+    <div *ngIf="viewMode === 'table'" class="table-view">
+      <div class="table-container">
+        <table class="users-table">
+          <thead>
+            <tr>
+              <th (click)="sortByField('displayName')" class="sortable">
+                <span>Nom Complet</span>
+                <i class="fas" [class]="getSortIconClass('displayName')"></i>
+              </th>
+              <th>Rôle</th>
+              <th>Spécialité</th>
+              <th>Statut</th>
+              <th class="actions-header">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="let user of paginatedUsers"
+              class="user-row"
+              [class.disabled]="user.disabled"
+            >
+              <td class="user-info">
+                <div class="user-avatar">
+                  {{
+                    user.displayName
+                      ? user.displayName.charAt(0).toUpperCase()
+                      : "U"
+                  }}
+                </div>
+                <div class="user-details">
+                  <div class="user-name">
+                    {{ user.displayName || "Non renseigné" }}
+                  </div>
+                  <div class="user-email">
+                    {{ user.email }}
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="role-badge" [class]="'role-' + user.role">
+                  {{ getRoleDisplay(user.role) }}
+                </span>
+              </td>
+              <td class="user-speciality">{{ user.speciality || "-" }}</td>
+              <td>
+                <span class="status-badge" [class]="getStatusClass(user)">
+                  {{ getStatusDisplay(user) }}
+                </span>
+              </td>
+              <td class="actions">
+                <div class="action-buttons">
+                  <button
+                    class="btn-action btn-info"
+                    (click)="showUserInfo(user)"
+                    title="Voir les informations"
+                  >
+                    <i class="fas fa-info-circle"></i>
+                  </button>
+                  <button
+                    class="btn-action btn-edit"
+                    (click)="editUser(user)"
+                    title="Modifier"
+                  >
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button
+                    class="btn-action btn-status"
+                    (click)="toggleUserStatus(user)"
+                    [title]="user.disabled ? 'Activer' : 'Désactiver'"
+                    aria-label="Changer le statut de l'utilisateur"
+                  >
+                    <i
+                      class="fas"
+                      [class.fa-user-check]="!user.disabled"
+                      [class.fa-user-slash]="user.disabled"
+                    ></i>
+                  </button>
+                  <button
+                    class="btn-action btn-verify"
+                    (click)="sendVerificationEmail(user)"
+                    *ngIf="!user.emailVerified"
+                    title="Envoyer email de vérification"
+                  >
+                    <i class="fas fa-envelope"></i>
+                  </button>
+                  <button
+                    class="btn-action btn-reset"
+                    (click)="resetPassword(user)"
+                    title="Réinitialiser mot de passe"
+                  >
+                    <i class="fas fa-key"></i>
+                  </button>
+                  <button
+                    class="btn-action btn-delete"
+                    (click)="deleteUser(user)"
+                    title="Supprimer"
+                  >
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- États -->
+        <div *ngIf="isLoading" class="loading-state">
+          <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+          </div>
+          <p>Chargement des utilisateurs...</p>
+        </div>
+
+        <div
+          *ngIf="!isLoading && filteredUsers.length === 0"
+          class="empty-state"
+        >
+          <div class="empty-icon">
+            <i class="fas fa-users"></i>
+          </div>
+          <h3>Aucun utilisateur trouvé</h3>
+          <p>Aucun utilisateur ne correspond à vos critères de recherche.</p>
+          <button class="btn btn-primary" (click)="addUser()">
+            <i class="fas fa-user-plus"></i>
+            Ajouter le premier utilisateur
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vue Cartes -->
+    <div *ngIf="viewMode === 'cards'" class="cards-view">
+      <div class="cards-grid">
+        <div
+          *ngFor="let user of paginatedUsers"
+          class="user-card"
+          [class.disabled]="user.disabled"
+        >
+          <div class="card-header">
+            <div class="user-avatar-large">
+              {{
+                user.displayName
+                  ? user.displayName.charAt(0).toUpperCase()
+                  : "U"
+              }}
+            </div>
+            <div class="user-main-info">
+              <h3 class="user-name">
+                {{ user.displayName || "Non renseigné" }}
+              </h3>
+              <p class="user-email">{{ user.email }}</p>
+              <span class="role-badge" [class]="'role-' + user.role">
+                {{ getRoleDisplay(user.role) }}
+              </span>
+            </div>
+          </div>
+
+          <div class="card-details">
+            <div class="detail-item">
+              <i class="fas fa-briefcase-medical"></i>
+              <span>{{ user.speciality || "Aucune spécialité" }}</span>
+            </div>
+            <div class="detail-item">
+              <i class="fas fa-circle" [class]="getStatusClass(user)"></i>
+              <span>{{ getStatusDisplay(user) }}</span>
+            </div>
+            <div class="detail-item">
+              <i class="fas fa-birthday-cake"></i>
+              <span>{{
+                user.birthDate
+                  ? getAge(user.birthDate) + " ans"
+                  : "Âge non renseigné"
+              }}</span>
+            </div>
+          </div>
+
+          <div class="card-actions">
+            <button
+              class="btn-action btn-info"
+              (click)="showUserInfo(user)"
+              title="Voir les informations"
+            >
+              <i class="fas fa-info-circle"></i>
+              Infos
+            </button>
+            <button
+              class="btn-action btn-edit"
+              (click)="editUser(user)"
+              title="Modifier"
+            >
+              <i class="fas fa-edit"></i>
+              Modifier
+            </button>
+            <button
+              class="btn-action btn-status"
+              (click)="toggleUserStatus(user)"
+              [title]="user.disabled ? 'Activer' : 'Désactiver'"
+            >
+              <i
+                class="fas"
+                [class.fa-user-check]="!user.disabled"
+                [class.fa-user-slash]="user.disabled"
+              ></i>
+              {{ user.disabled ? "Activer" : "Désactiver" }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- État vide pour les cartes -->
+      <div *ngIf="!isLoading && filteredUsers.length === 0" class="empty-state">
+        <div class="empty-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <h3>Aucun utilisateur trouvé</h3>
+        <p>Aucun utilisateur ne correspond à vos critères de recherche.</p>
+        <button class="btn btn-primary" (click)="addUser()">
+          <i class="fas fa-user-plus"></i>
+          Ajouter le premier utilisateur
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div
+    *ngIf="filteredUsers.length > 0 && !isLoading"
+    class="pagination-section"
+  >
+    <div class="pagination-info">
+      Affichage de {{ (currentPage - 1) * itemsPerPage + 1 }} à
+      {{ Math.min(currentPage * itemsPerPage, filteredUsers.length) }}
+      sur {{ filteredUsers.length }} utilisateur(s)
+    </div>
+
+    <div class="pagination-controls">
+      <button
+        (click)="goToPage(1)"
+        [disabled]="currentPage === 1"
+        class="pagination-btn"
+        aria-label="Première page"
+      >
+        <i class="fas fa-angle-double-left"></i>
+      </button>
+      <button
+        (click)="prevPage()"
+        [disabled]="currentPage === 1"
+        class="pagination-btn"
+      >
+        <i class="fas fa-chevron-left"></i>
+        Précédent
+      </button>
+
+      <div class="page-numbers">
+        <span class="page-info"
+          >Page {{ currentPage }} sur {{ totalPages }}</span
+        >
+      </div>
+
+      <button
+        (click)="nextPage()"
+        [disabled]="currentPage === totalPages"
+        class="pagination-btn"
+      >
+        Suivant
+        <i class="fas fa-chevron-right"></i>
+      </button>
+      <button
+        (click)="goToPage(totalPages)"
+        [disabled]="currentPage === totalPages"
+        class="pagination-btn"
+        aria-label="Dernière page"
+      >
+        <i class="fas fa-angle-double-right"></i>
+      </button>
+    </div>
+  </div>
+</div>

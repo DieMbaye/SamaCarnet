@@ -1,0 +1,32 @@
+<!-- components/patient/dashboard/patient-dashboard.component.html -->
+<div class="patient-container">
+  <!-- Sidebar réutilisable -->
+  <app-sidebar
+    [isSidebarCollapsed]="isSidebarCollapsed"
+    [isMobileOpen]="isMobileOpen"
+    [activeSection]="getActiveSection()"
+    [currentUser]="currentUser"
+    (sectionChange)="onSectionChange($event)"
+    (toggleSidebar)="onToggleSidebar()"
+    (toggleMobileSidebar)="onToggleMobileSidebar()"
+    (logout)="onLogout()"
+  ></app-sidebar>
+
+  <!-- Main Content -->
+  <main class="patient-main" [class.expanded]="isSidebarCollapsed">
+    <!-- Header mobile -->
+    <div class="mobile-header">
+      <button
+        class="mobile-toggle"
+        (click)="onToggleMobileSidebar()"
+        aria-label="Toggle Sidebar"
+      >
+        <i class="fas fa-bars"></i>
+      </button>
+      <h1>Tableau de bord patient</h1>
+    </div>
+    <section class="section-content">
+      <router-outlet></router-outlet>
+    </section>
+  </main>
+</div>

@@ -1,0 +1,189 @@
+<div class="overview-container">
+  <!-- Statistics Cards -->
+  <div class="dashboard-stats">
+    <div class="stat-card primary">
+      <div class="stat-icon">
+        <i class="fas fa-calendar-day"></i>
+      </div>
+      <div class="stat-info">
+        <h3>{{ stats.todayAppointments }}</h3>
+        <p>RDV Aujourd'hui</p>
+        <span class="stat-trend positive">+12%</span>
+      </div>
+    </div>
+
+    <div class="stat-card warning">
+      <div class="stat-icon">
+        <i class="fas fa-clock"></i>
+      </div>
+      <div class="stat-info">
+        <h3>{{ stats.pendingConfirmations }}</h3>
+        <p>En Attente</p>
+        <span class="stat-trend">En cours</span>
+      </div>
+    </div>
+
+    <div class="stat-card success">
+      <div class="stat-icon">
+        <i class="fas fa-users"></i>
+      </div>
+      <div class="stat-info">
+        <h3>{{ stats.totalPatients }}</h3>
+        <p>Patients Totals</p>
+        <span class="stat-trend positive">+5%</span>
+      </div>
+    </div>
+
+    <div class="stat-card secondary">
+      <div class="stat-icon">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <div class="stat-info">
+        <h3>{{ historyStats.completed }}</h3>
+        <p>Terminés</p>
+      </div>
+    </div>
+
+    <div class="stat-card danger">
+      <div class="stat-icon">
+        <i class="fas fa-times-circle"></i>
+      </div>
+      <div class="stat-info">
+        <h3>{{ stats.cancellationRate }}%</h3>
+        <p>Taux Annulation</p>
+        <span class="stat-trend negative">+2%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overview Grid -->
+  <div class="overview-grid">
+    <!-- Urgent Appointments -->
+    <div class="overview-card urgent-appointments">
+      <div class="card-header">
+        <h3>
+          <i class="fas fa-exclamation-triangle"></i> Rendez-vous Urgents
+        </h3>
+        <span class="badge danger">{{ urgentCases.length }}</span>
+      </div>
+      <div class="card-content">
+        <div *ngFor="let appointment of urgentCases" class="urgent-item">
+          <div class="patient-info">
+            <strong>{{ getPatientName(appointment.patientId) }}</strong>
+            <span class="appointment-time">
+              {{ appointment.time }} - {{ appointment.reason }}
+            </span>
+          </div>
+          <button class="btn-sm primary">
+            Détails
+          </button>
+        </div>
+        <div *ngIf="urgentCases.length === 0" class="empty-state">
+          <i class="fas fa-check-circle"></i>
+          <p>Aucun rendez-vous urgent</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upcoming Appointments -->
+    <div class="overview-card upcoming-appointments">
+      <div class="card-header">
+        <h3><i class="fas fa-calendar-alt"></i> Prochains RDV</h3>
+        <span class="badge info">{{ upcomingAppointments.length }}</span>
+      </div>
+      <div class="card-content">
+        <div *ngFor="let appointment of upcomingAppointments" class="appointment-item">
+          <div class="appointment-time">
+            <strong>{{ appointment.time }}</strong>
+            <span class="date">{{ formatAppointmentDate(appointment.date) }}</span>
+          </div>
+          <div class="appointment-details">
+            <strong>{{ getPatientName(appointment.patientId) }}</strong>
+            <span class="reason">{{ appointment.reason }}</span>
+          </div>
+          <div class="appointment-actions">
+            <span class="status-badge" [class]="getAppointmentStatusBadge(appointment.status)">
+              {{ appointment.status === 'pending' ? 'En attente' : 'Confirmé' }}
+            </span>
+          </div>
+        </div>
+        <div *ngIf="upcomingAppointments.length === 0" class="empty-state">
+          <i class="fas fa-calendar-times"></i>
+          <p>Aucun rendez-vous à venir</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Medical Records -->
+    <div class="overview-card recent-records">
+      <div class="card-header">
+        <h3><i class="fas fa-file-medical"></i> Dossiers Récents</h3>
+      </div>
+      <div class="card-content">
+        <div *ngFor="let record of recentMedicalRecords" class="record-item">
+          <div class="record-info">
+            <strong>{{ getPatientName(record.patientId) }}</strong>
+            <span class="record-date">{{ record.date | date:'shortDate':'fr' }}</span>
+            <p class="record-diagnosis">{{ record.description }}</p>
+          </div>
+        </div>
+        <div *ngIf="recentMedicalRecords.length === 0" class="empty-state">
+          <i class="fas fa-file-medical-alt"></i>
+          <p>Aucun dossier récent</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="overview-card charts">
+      <div class="chart-container">
+        <h3>Statut des Rendez-vous</h3>
+        <div class="chart-wrapper">
+          <canvas
+            baseChart
+            [data]="appointmentStatusChartData"
+            [type]="'doughnut'"
+            [options]="chartOptions">
+          </canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="overview-card charts">
+      <div class="chart-container">
+        <h3>Activité Hebdomadaire</h3>
+        <div class="chart-wrapper">
+          <canvas
+            baseChart
+            [data]="weeklyAppointmentsChartData"
+            [type]="'line'"
+            [options]="chartOptions">
+          </canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="quick-actions">
+    <h3>Actions Rapides</h3>
+    <div class="actions-grid">
+      <button class="action-btn primary">
+        <i class="fas fa-calendar-plus"></i>
+        <span>Nouveau RDV</span>
+      </button>
+      <button class="action-btn success">
+        <i class="fas fa-prescription"></i>
+        <span>Ordonnance</span>
+      </button>
+      <button class="action-btn info">
+        <i class="fas fa-file-medical"></i>
+        <span>Dossier Médical</span>
+      </button>
+      <button class="action-btn warning" (click)="refreshData()">
+        <i class="fas fa-sync-alt"></i>
+        <span>Actualiser</span>
+      </button>
+    </div>
+  </div>
+</div>

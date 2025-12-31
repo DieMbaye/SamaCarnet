@@ -1,0 +1,629 @@
+<div class="appointments-management">
+  <!-- En-tête avec statistiques -->
+  <div class="management-header">
+    <div class="header-content">
+      <div class="header-text">
+        <h1>Gestion des Rendez-vous</h1>
+        <p>Gérez tous les rendez-vous de votre application médicale</p>
+      </div>
+      <div class="header-actions">
+        <div class="view-toggle">
+          <button
+            class="btn-toggle"
+            [class.active]="viewMode === 'table'"
+            (click)="switchView('table')"
+            title="Vue tableau"
+          >
+            <i class="fas fa-table"></i>
+          </button>
+          <button
+            class="btn-toggle"
+            [class.active]="viewMode === 'card'"
+            (click)="switchView('card')"
+            title="Vue cartes"
+          >
+            <i class="fas fa-th-large"></i>
+          </button>
+        </div>
+        <button class="btn btn-primary" (click)="exportAppointments()">
+          <i class="fas fa-download"></i>
+          Exporter
+        </button>
+      </div>
+    </div>
+
+    <!-- Cartes de statistiques -->
+    <div class="stats-cards">
+      <div class="stat-card">
+        <div class="stat-icon total">
+          <i class="fas fa-calendar-alt"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ appointmentStats.total }}</h3>
+          <p>Total RDV</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon today">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ appointmentStats.today }}</h3>
+          <p>RDV Aujourd'hui</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon confirmed">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ appointmentStats.confirmed }}</h3>
+          <p>Confirmés</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon scheduled">
+          <i class="fas fa-calendar-check"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ appointmentStats.pending }}</h3>
+          <p>En attente</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon completed">
+          <i class="fas fa-check-double"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ appointmentStats.completed }}</h3>
+          <p>Terminés</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon cancelled">
+          <i class="fas fa-times-circle"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ appointmentStats.cancelled }}</h3>
+          <p>Annulés</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contrôles de filtrage et recherche -->
+  <div class="management-controls">
+    <div class="controls-main">
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (input)="filterAppointments()"
+          placeholder="Rechercher par patient, médecin, spécialité..."
+          class="search-input"
+        />
+      </div>
+
+      <div class="controls-actions">
+        <button class="btn btn-secondary" (click)="toggleFilters()">
+          <i class="fas fa-filter"></i>
+          Filtres
+          <i
+            class="fas"
+            [class.fa-chevron-down]="!showFilters"
+            [class.fa-chevron-up]="showFilters"
+          ></i>
+        </button>
+
+        <button class="btn btn-outline" (click)="clearFilters()">
+          <i class="fas fa-eraser"></i>
+          Effacer
+        </button>
+      </div>
+    </div>
+
+    <!-- Filtres avancés -->
+    <div *ngIf="showFilters" class="advanced-filters">
+      <div class="filters-grid">
+        <div class="filter-group">
+          <label>Statut</label>
+          <select
+            [(ngModel)]="selectedStatus"
+            (change)="filterAppointments()"
+            class="filter-select"
+          >
+            <option value="">Tous les statuts</option>
+            <option *ngFor="let status of statuses" [value]="status.value">
+              {{ status.label }}
+            </option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Médecin</label>
+          <select
+            [(ngModel)]="selectedDoctor"
+            (change)="filterAppointments()"
+            class="filter-select"
+          >
+            <option value="">Tous les médecins</option>
+            <option *ngFor="let doctor of doctors" [value]="doctor.uid">
+              {{ doctor.displayName }} - {{ doctor.speciality }}
+            </option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Date spécifique</label>
+          <input
+            type="date"
+            [(ngModel)]="selectedDate"
+            (change)="filterAppointments()"
+            class="filter-input"
+            placeholder="Date"
+          />
+        </div>
+
+        <div class="filter-group date-range">
+          <label>Plage de dates</label>
+          <div class="date-inputs">
+            <input
+              type="date"
+              [(ngModel)]="dateRange.start"
+              (change)="filterAppointments()"
+              class="filter-input"
+              placeholder="Dates"
+            />
+            <span class="date-separator">à</span>
+            <input
+              type="date"
+              [(ngModel)]="dateRange.end"
+              (change)="filterAppointments()"
+              class="filter-input"
+              placeholder="Date fin"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls-info">
+      <span class="results-count">
+        {{ filteredAppointments.length }} rendez-vous trouvé(s)
+      </span>
+    </div>
+  </div>
+
+  <!-- VUE TABLEAU -->
+  <div *ngIf="viewMode === 'table'" class="appointments-table-container">
+    <table class="appointments-table">
+      <thead>
+        <tr>
+          <th (click)="sortByField('patientName')" class="sortable">
+            <span>Patient & Médecin</span>
+            <i
+              class="fas fa-sort"
+              [class.fa-sort-up]="
+                sortBy === 'patientName' && sortOrder === 'asc'
+              "
+              [class.fa-sort-down]="
+                sortBy === 'patientName' && sortOrder === 'desc'
+              "
+            ></i>
+          </th>
+          <th (click)="sortByField('doctorSpeciality')" class="sortable">
+            <span>Spécialité</span>
+            <i
+              class="fas fa-sort"
+              [class.fa-sort-up]="
+                sortBy === 'doctorSpeciality' && sortOrder === 'asc'
+              "
+              [class.fa-sort-down]="
+                sortBy === 'doctorSpeciality' && sortOrder === 'desc'
+              "
+            ></i>
+          </th>
+          <th (click)="sortByField('date')" class="sortable">
+            <span>Date & Heure</span>
+            <i
+              class="fas fa-sort"
+              [class.fa-sort-up]="sortBy === 'date' && sortOrder === 'asc'"
+              [class.fa-sort-down]="sortBy === 'date' && sortOrder === 'desc'"
+            ></i>
+          </th>
+          <th>Motif</th>
+          <th (click)="sortByField('status')" class="sortable">
+            <span>Statut</span>
+            <i
+              class="fas fa-sort"
+              [class.fa-sort-up]="sortBy === 'status' && sortOrder === 'asc'"
+              [class.fa-sort-down]="sortBy === 'status' && sortOrder === 'desc'"
+            ></i>
+          </th>
+          <th class="actions-header">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          *ngFor="let appointment of paginatedAppointments"
+          class="appointment-row"
+          [class.past]="appointment.isPast"
+        >
+          <!-- NOUVELLE COLONNE COMBINÉE PATIENT & MÉDECIN -->
+          <td class="combined-user-info">
+            <!-- Ligne Patient -->
+            <div class="user-row patient-row">
+              <div class="user-avatar patient">
+                {{ getInitials(appointment.patientName) }}
+              </div>
+              <div class="user-details">
+                <div class="user-name">{{ appointment.patientName }}</div>
+                <div class="user-email">{{ appointment.patientEmail }}</div>
+              </div>
+              <div class="user-role-badge patient-role">Patient</div>
+            </div>
+
+            <!-- Séparateur -->
+            <div class="user-separator">
+              <i class="fas fa-arrow-right"></i>
+            </div>
+
+            <!-- Ligne Médecin -->
+            <div class="user-row doctor-row">
+              <div class="user-avatar doctor">
+                {{ getInitials(appointment.doctorName) }}
+              </div>
+              <div class="user-details">
+                <div class="user-name">{{ appointment.doctorName }}</div>
+                <div class="user-speciality">
+                  {{ appointment.doctorSpeciality }}
+                </div>
+              </div>
+              <div class="user-role-badge doctor-role">Médecin</div>
+            </div>
+          </td>
+
+          <td class="speciality">
+            <span class="speciality-badge">{{
+              appointment.doctorSpeciality
+            }}</span>
+          </td>
+
+          <td class="datetime">
+            <div class="date">{{ appointment.formattedDate }}</div>
+            <div class="time">{{ appointment.time }}</div>
+          </td>
+
+          <td class="reason">
+            <div class="reason-text" [title]="appointment.reason">
+              {{ appointment.reason }}
+            </div>
+            <div
+              class="notes"
+              *ngIf="appointment.notes"
+              [title]="appointment.notes"
+            >
+              <i class="fas fa-sticky-note"></i>
+              Notes
+            </div>
+          </td>
+
+          <td>
+            <span
+              class="status-badge"
+              [class]="getStatusBadgeClass(appointment.status)"
+            >
+              {{ getStatusDisplay(appointment.status) }}
+            </span>
+          </td>
+
+          <td class="actions">
+            <div class="action-buttons">
+              <!-- Bouton pour les notes -->
+              <button
+                class="btn-action btn-notes"
+                (click)="addNotes(appointment)"
+                title="Ajouter/modifier notes"
+              >
+                <i class="fas fa-notes-medical"></i>
+              </button>
+
+              <!-- Actions selon le statut -->
+              <button
+                *ngIf="appointment.status === 'pending'"
+                class="btn-action btn-confirm"
+                (click)="updateAppointmentStatus(appointment, 'confirmed')"
+                title="Confirmer"
+              >
+                <i class="fas fa-check"></i>
+              </button>
+
+              <button
+                *ngIf="
+                  appointment.status === 'confirmed' && !appointment.isPast
+                "
+                class="btn-action btn-complete"
+                (click)="updateAppointmentStatus(appointment, 'completed')"
+                title="Marquer comme terminé"
+              >
+                <i class="fas fa-check-double"></i>
+              </button>
+
+              <button
+                *ngIf="
+                  appointment.status !== 'cancelled' &&
+                  appointment.status !== 'completed' &&
+                  !appointment.isPast
+                "
+                class="btn-action btn-cancel"
+                (click)="cancelAppointment(appointment)"
+                title="Annuler"
+              >
+                <i class="fas fa-times"></i>
+              </button>
+
+              <button
+                class="btn-action btn-view"
+                (click)="viewAppointmentDetails(appointment)"
+                title="Voir détails"
+              >
+                <i class="fas fa-eye"></i>
+              </button>
+
+              <button
+                class="btn-action btn-delete"
+                (click)="deleteAppointment(appointment)"
+                title="Supprimer"
+              >
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- États de chargement et vide -->
+    <div *ngIf="isLoading" class="loading-state">
+      <div class="loading-spinner">
+        <i class="fas fa-spinner fa-spin"></i>
+      </div>
+      <p>Chargement des rendez-vous...</p>
+    </div>
+
+    <div
+      *ngIf="!isLoading && filteredAppointments.length === 0"
+      class="empty-state"
+    >
+      <div class="empty-icon">
+        <i class="fas fa-calendar-times"></i>
+      </div>
+      <h3>Aucun rendez-vous trouvé</h3>
+      <p>Aucun rendez-vous ne correspond à vos critères de recherche.</p>
+    </div>
+  </div>
+
+  <!-- VUE CARTES -->
+  <div *ngIf="viewMode === 'card'" class="appointments-cards-container">
+    <div class="cards-grid">
+      <div
+        *ngFor="let appointment of paginatedAppointments"
+        class="appointment-card"
+        [class.past]="appointment.isPast"
+        [class]="'status-' + appointment.status"
+      >
+        <div class="card-header">
+          <div class="card-users">
+            <div class="user-info">
+              <div class="user-avatar patient">
+                {{ getInitials(appointment.patientName) }}
+              </div>
+              <div class="user-details">
+                <div class="user-name">{{ appointment.patientName }}</div>
+                <div class="user-role">Patient</div>
+              </div>
+            </div>
+            <div class="user-separator">
+              <i class="fas fa-arrow-right"></i>
+            </div>
+            <div class="user-info">
+              <div class="user-avatar doctor">
+                {{ getInitials(appointment.doctorName) }}
+              </div>
+              <div class="user-details">
+                <div class="user-name">{{ appointment.doctorName }}</div>
+                <div class="user-role">{{ appointment.doctorSpeciality }}</div>
+              </div>
+            </div>
+          </div>
+          <span
+            class="status-badge"
+            [class]="getStatusBadgeClass(appointment.status)"
+          >
+            {{ getStatusDisplay(appointment.status) }}
+          </span>
+        </div>
+
+        <div class="card-content">
+          <div class="appointment-datetime">
+            <i class="fas fa-calendar"></i>
+            <span>{{ appointment.formattedDate }}</span>
+          </div>
+          <div class="appointment-time">
+            <i class="fas fa-clock"></i>
+            <span>{{ appointment.time }}</span>
+          </div>
+          <div class="appointment-reason">
+            <i class="fas fa-stethoscope"></i>
+            <span>{{ appointment.reason }}</span>
+          </div>
+          <div
+            *ngIf="appointment.notes"
+            class="appointment-notes"
+            [title]="appointment.notes"
+          >
+            <i class="fas fa-notes-medical"></i>
+            <span>{{ appointment.notes }}</span>
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <button
+            class="btn-action btn-notes"
+            (click)="addNotes(appointment)"
+            title="Ajouter/modifier notes"
+          >
+            <i class="fas fa-notes-medical"></i>
+          </button>
+
+          <button
+            *ngIf="appointment.status === 'pending'"
+            class="btn-action btn-confirm"
+            (click)="updateAppointmentStatus(appointment, 'confirmed')"
+            title="Confirmer"
+          >
+            <i class="fas fa-check"></i>
+          </button>
+
+          <button
+            *ngIf="appointment.status === 'confirmed' && !appointment.isPast"
+            class="btn-action btn-complete"
+            (click)="updateAppointmentStatus(appointment, 'completed')"
+            title="Marquer comme terminé"
+          >
+            <i class="fas fa-check-double"></i>
+          </button>
+
+          <button
+            *ngIf="
+              appointment.status !== 'cancelled' &&
+              appointment.status !== 'completed' &&
+              !appointment.isPast
+            "
+            class="btn-action btn-cancel"
+            (click)="cancelAppointment(appointment)"
+            title="Annuler"
+          >
+            <i class="fas fa-times"></i>
+          </button>
+
+          <button
+            class="btn-action btn-view"
+            (click)="viewAppointmentDetails(appointment)"
+            title="Voir détails"
+          >
+            <i class="fas fa-eye"></i>
+          </button>
+
+          <button
+            class="btn-action btn-delete"
+            (click)="deleteAppointment(appointment)"
+            title="Supprimer"
+          >
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- États de chargement et vide -->
+    <div *ngIf="isLoading" class="loading-state">
+      <div class="loading-spinner">
+        <i class="fas fa-spinner fa-spin"></i>
+      </div>
+      <p>Chargement des rendez-vous...</p>
+    </div>
+
+    <div
+      *ngIf="!isLoading && filteredAppointments.length === 0"
+      class="empty-state"
+    >
+      <div class="empty-icon">
+        <i class="fas fa-calendar-times"></i>
+      </div>
+      <h3>Aucun rendez-vous trouvé</h3>
+      <p>Aucun rendez-vous ne correspond à vos critères de recherche.</p>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div
+    *ngIf="filteredAppointments.length > 0 && !isLoading"
+    class="pagination-container"
+  >
+    <div class="pagination-info">
+      Affichage de {{ (currentPage - 1) * itemsPerPage + 1 }} à
+      {{ Math.min(currentPage * itemsPerPage, filteredAppointments.length) }}
+      sur {{ filteredAppointments.length }} rendez-vous
+    </div>
+
+    <div class="pagination-controls">
+      <button
+        (click)="prevPage()"
+        [disabled]="currentPage === 1"
+        class="pagination-btn"
+      >
+        <i class="fas fa-chevron-left"></i>
+        Précédent
+      </button>
+
+      <div class="page-numbers">
+        <span class="page-info"
+          >Page {{ currentPage }} sur {{ totalPages }}</span
+        >
+      </div>
+
+      <button
+        (click)="nextPage()"
+        [disabled]="currentPage === totalPages"
+        class="pagination-btn"
+      >
+        Suivant
+        <i class="fas fa-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal pour les notes -->
+  <div *ngIf="showNotesModal" class="modal-overlay">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3>Notes du rendez-vous</h3>
+        <button
+          class="close-btn"
+          (click)="closeNotesModal()"
+          aria-label="Close"
+        >
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Notes médicales</label>
+          <textarea
+            [(ngModel)]="notesText"
+            class="notes-textarea"
+            placeholder="Ajoutez des notes médicales..."
+            rows="6"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" (click)="closeNotesModal()">
+          Annuler
+        </button>
+        <button class="btn btn-primary" (click)="saveNotes()">
+          Enregistrer les notes
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

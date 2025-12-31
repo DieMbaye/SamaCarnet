@@ -1,0 +1,153 @@
+<div class="patients-container">
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="loading-spinner"></div>
+    <p>Chargement des patients...</p>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!isLoading" class="patients-content">
+    <!-- Header -->
+    <div class="section-header">
+      <h2>Mes Patients ({{ filteredPatients.length }})</h2>
+      <div class="header-actions">
+        <div class="search-group">
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (input)="onSearchChange()"
+            placeholder="Rechercher un patient..."
+            class="search-input"
+          />
+          <i class="fas fa-search search-icon"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Patients Grid -->
+    <div class="patients-grid">
+      <div *ngFor="let patient of filteredPatients" class="patient-card">
+        <div class="patient-header">
+          <div class="patient-avatar">
+            <i class="fas fa-user"></i>
+          </div>
+          <div class="patient-info">
+            <h4>{{ patient.displayName }}</h4>
+            <p class="patient-email">{{ patient.email }}</p>
+            <div class="patient-details">
+              <span class="patient-age" *ngIf="patient.birthDate">
+                {{ calculatePatientAge(patient.uid) }} ans
+              </span>
+              <span class="last-appointment">
+                Dernier RDV: {{ getLastAppointmentDate(patient.uid) }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="patient-stats">
+          <div class="stat">
+            <strong>{{ getPatientAppointments(patient.uid).length }}</strong>
+            <span>RDV</span>
+          </div>
+          <div class="stat">
+            <strong>{{ getPatientMedicalRecords(patient.uid).length }}</strong>
+            <span>Dossiers</span>
+          </div>
+        </div>
+
+        <div class="patient-actions">
+          <button
+            class="btn-sm primary"
+            (click)="showMedicalRecordForm(patient)"
+          >
+            <i class="fas fa-file-medical"></i> Dossier
+          </button>
+          <button
+            class="btn-sm secondary"
+            (click)="showAppointmentForm(patient)"
+          >
+            <i class="fas fa-calendar-plus"></i> RDV
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="filteredPatients.length === 0" class="empty-state">
+      <i class="fas fa-users"></i>
+      <h3>Aucun patient trouvé</h3>
+      <p *ngIf="searchTerm">
+        Aucun patient ne correspond à "{{ searchTerm }}"
+      </p>
+      <p *ngIf="!searchTerm">
+        Aucun patient dans votre liste
+      </p>
+    </div>
+
+    <!-- Refresh Button -->
+    <div class="refresh-section">
+      <button class="btn-secondary" (click)="refreshData()" [disabled]="isLoading">
+        <i class="fas fa-sync-alt" [class.fa-spin]="isLoading"></i>
+        {{ isLoading ? 'Actualisation...' : 'Actualiser' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Medical Record Modal -->
+<div class="modal" *ngIf="showMedicalRecordModal">
+  <div class="modal-content large">
+    <div class="modal-header">
+      <h3>Dossier Médical - {{ selectedPatient?.displayName }}</h3>
+      <button class="btn-close" (click)="closeMedicalRecordModal()" aria-label="Fermer">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="medical-records-list">
+        <div *ngFor="let record of getPatientMedicalRecords(selectedPatient?.uid || '')" 
+             class="medical-record-item">
+          <div class="record-header">
+            <strong>{{ record.date | date:'fullDate':'fr' }}</strong>
+            <span class="record-type">{{ record.type }}</span>
+          </div>
+          <p class="record-description">{{ record.description }}</p>
+          <p class="record-notes" *ngIf="record.notes">{{ record.notes }}</p>
+        </div>
+        <div *ngIf="getPatientMedicalRecords(selectedPatient?.uid || '').length === 0" 
+             class="no-records">
+          Aucun dossier médical pour ce patient
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-primary">
+        <i class="fas fa-plus"></i> Nouveau Dossier
+      </button>
+      <button class="btn-secondary" (click)="closeMedicalRecordModal()">
+        Fermer
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Appointment Modal -->
+<div class="modal" *ngIf="showAppointmentModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Nouveau RDV - {{ selectedPatient?.displayName }}</h3>
+      <button class="btn-close" (click)="closeAppointmentModal()" aria-label="Fermer">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p>Fonctionnalité de création de rendez-vous à implémenter</p>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" (click)="closeAppointmentModal()">
+        Fermer
+      </button>
+    </div>
+  </div>
+</div>

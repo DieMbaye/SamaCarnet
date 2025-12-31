@@ -1,0 +1,412 @@
+<div class="reports-management">
+  <!-- En-tête -->
+  <div class="management-header">
+    <div class="header-content">
+      <div class="header-text">
+        <h1>Rapports et Stats</h1>
+        <p>Analyses détaillées et indicateurs de performance</p>
+      </div>
+      <div class="header-actions">
+        <div class="export-buttons">
+          <button class="btn btn-outline" (click)="exportReport('pdf')">
+            <i class="fas fa-file-pdf"></i>
+            PDF
+          </button>
+          <button class="btn btn-outline" (click)="exportReport('excel')">
+            <i class="fas fa-file-excel"></i>
+            Excel
+          </button>
+          <button class="btn btn-primary" (click)="printReport()">
+            <i class="fas fa-print"></i>
+            Imprimer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contrôles de rapport -->
+  <div class="report-controls">
+    <div class="controls-grid">
+      <div class="control-group">
+        <label>Période</label>
+        <div class="date-inputs">
+          <input
+            type="date"
+            [(ngModel)]="dateRange.start"
+            (change)="onDateRangeChange()"
+            class="control-input"
+            placeholder="Début"
+          />
+          <span class="date-separator">au</span>
+          <input
+            type="date"
+            [(ngModel)]="dateRange.end"
+            (change)="onDateRangeChange()"
+            class="control-input"
+            placeholder="Fin"
+          />
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>Type de rapport</label>
+        <select
+          [(ngModel)]="reportType"
+          (change)="onReportTypeChange()"
+          class="control-select"
+        >
+          <option value="appointments">Rendez-vous</option>
+          <option value="users">Utilisateurs</option>
+          <option value="financial">Financier</option>
+          <option value="performance">Performance</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label>Métriques</label>
+        <select class="control-select">
+          <option>Toutes les métriques</option>
+          <option>Principales KPI</option>
+          <option>Analyse détaillée</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Indicateurs de performance -->
+  <div class="kpi-cards">
+    <div class="kpi-grid">
+      <!-- Rendez-vous -->
+      <div class="kpi-card" *ngIf="reportType === 'appointments' || reportType === 'performance'">
+        <div class="kpi-icon appointments">
+          <i class="fas fa-calendar-check"></i>
+        </div>
+        <div class="kpi-content">
+          <h3>{{ appointmentStats.total || 0 }}</h3>
+          <p>Total Rendez-vous</p>
+          <span class="kpi-trend positive">
+            <i class="fas fa-arrow-up"></i>
+            {{ appointmentStats.averagePerDay?.toFixed(1) || 0 }}/jour
+          </span>
+        </div>
+      </div>
+
+      <div class="kpi-card" *ngIf="reportType === 'appointments' || reportType === 'performance'">
+        <div class="kpi-icon confirmed">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="kpi-content">
+          <h3>{{ (appointmentStats.byStatus?.confirmed || 0) + (appointmentStats.byStatus?.completed || 0) }}</h3>
+          <p>RDV Honorés</p>
+          <span class="kpi-trend positive">
+            <i class="fas fa-chart-line"></i>
+            {{ (100 - (appointmentStats.cancellationRate || 0)).toFixed(1) }}%
+          </span>
+        </div>
+      </div>
+
+      <!-- Utilisateurs -->
+      <div class="kpi-card" *ngIf="reportType === 'users' || reportType === 'performance'">
+        <div class="kpi-icon users">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="kpi-content">
+          <h3>{{ userStats.total || 0 }}</h3>
+          <p>Utilisateurs Total</p>
+          <span class="kpi-trend positive">
+            <i class="fas fa-arrow-up"></i>
+            {{ userStats.growthRate || 0 }}%
+          </span>
+        </div>
+      </div>
+
+      <div class="kpi-card" *ngIf="reportType === 'users' || reportType === 'performance'">
+        <div class="kpi-icon doctors">
+          <i class="fas fa-user-md"></i>
+        </div>
+        <div class="kpi-content">
+          <h3>{{ userStats.doctors || 0 }}</h3>
+          <p>Médecins Actifs</p>
+          <span class="kpi-trend">
+            {{ userStats.doctorsBySpeciality ? Object.keys(userStats.doctorsBySpeciality).length : 0 }} spécialités
+          </span>
+        </div>
+      </div>
+
+      <!-- Financier -->
+      <div class="kpi-card" *ngIf="reportType === 'financial' || reportType === 'performance'">
+        <div class="kpi-icon revenue">
+          <i class="fas fa-euro-sign"></i>
+        </div>
+        <div class="kpi-content">
+          <h3>{{ financialStats.totalRevenue || 0 | currency:'EUR':'symbol':'1.0-0' }}</h3>
+          <p>Chiffre d'Affaires</p>
+          <span class="kpi-trend positive">
+            <i class="fas fa-arrow-up"></i>
+            {{ financialStats.monthlyGrowth || 0 }}%
+          </span>
+        </div>
+      </div>
+
+      <div class="kpi-card" *ngIf="reportType === 'financial' || reportType === 'performance'">
+        <div class="kpi-icon average">
+          <i class="fas fa-chart-bar"></i>
+        </div>
+        <div class="kpi-content">
+          <h3>{{ financialStats.averageRevenuePerAppointment || 0 | currency:'EUR':'symbol':'1.0-0' }}</h3>
+          <p>Panier Moyen</p>
+          <span class="kpi-trend">
+            {{ financialStats.mostProfitableSpeciality || 'N/A' }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graphiques et visualisations -->
+  <div class="charts-section">
+    <div class="section-header">
+      <h2>Visualisations des Données</h2>
+      <p>Graphiques et analyses temporelles</p>
+    </div>
+
+    <div class="charts-grid">
+      <!-- Évolution des rendez-vous -->
+      <div class="chart-card" *ngIf="reportType === 'appointments' || reportType === 'performance'">
+        <div class="chart-header">
+          <h3>Évolution des Rendez-vous (30 jours)</h3>
+          <div class="chart-legend">
+            <span class="legend-item">
+              <span class="legend-color" style="background-color: #3b82f6;"></span>
+              Rendez-vous
+            </span>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas
+            baseChart
+            [data]="appointmentsChartData"
+            [type]="'line'"
+            [options]="appointmentsChartOptions"
+          >
+          </canvas>
+        </div>
+      </div>
+
+      <!-- Statut des rendez-vous -->
+      <div class="chart-card" *ngIf="reportType === 'appointments' || reportType === 'performance'">
+        <div class="chart-header">
+          <h3>Répartition par Statut</h3>
+        </div>
+        <div class="chart-container">
+          <canvas
+            baseChart
+            [data]="statusChartData"
+            [type]="'doughnut'"
+            [options]="{
+              responsive: true,
+              plugins: {
+                legend: {
+                  position: 'bottom'
+                }
+              }
+            }"
+          >
+          </canvas>
+        </div>
+      </div>
+
+      <!-- Médecins les plus actifs -->
+      <div class="chart-card" *ngIf="reportType === 'users' || reportType === 'performance'">
+        <div class="chart-header">
+          <h3>Médecins les Plus Actifs</h3>
+        </div>
+        <div class="chart-container">
+          <canvas
+            baseChart
+            [data]="doctorsChartData"
+            [type]="'bar'"
+            [options]="{
+              responsive: true,
+              plugins: {
+                legend: {
+                  display: false
+                }
+              },
+              scales: {
+                y: {
+                  beginAtZero: true
+                }
+              }
+            }"
+          >
+          </canvas>
+        </div>
+      </div>
+
+      <!-- Répartition par spécialité -->
+      <div class="chart-card" *ngIf="reportType === 'users' || reportType === 'performance'">
+        <div class="chart-header">
+          <h3>Répartition par Spécialité</h3>
+        </div>
+        <div class="chart-container">
+          <canvas
+            baseChart
+            [data]="specialitiesChartData"
+            [type]="'pie'"
+            [options]="{
+              responsive: true,
+              plugins: {
+                legend: {
+                  position: 'right'
+                }
+              }
+            }"
+          >
+          </canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tableaux détaillés -->
+  <div class="tables-section" *ngIf="reportType !== 'performance'">
+    <div class="section-header">
+      <h2>Données Détaillées</h2>
+      <p>Tables et analyses approfondies</p>
+    </div>
+
+    <!-- Tableau rendez-vous -->
+    <div class="data-table" *ngIf="reportType === 'appointments'">
+      <h3>Statistiques des Rendez-vous</h3>
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Métrique</th>
+            <th>Valeur</th>
+            <th>Évolution</th>
+            <th>Tendance</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Total des rendez-vous</td>
+            <td>{{ appointmentStats.total || 0 }}</td>
+            <td>+12%</td>
+            <td><span class="trend-badge positive">↑</span></td>
+          </tr>
+          <tr>
+            <td>Taux d'annulation</td>
+            <td>{{ appointmentStats.cancellationRate?.toFixed(1) || 0 }}%</td>
+            <td>-2%</td>
+            <td><span class="trend-badge positive">↓</span></td>
+          </tr>
+          <tr>
+            <td>Moyenne quotidienne</td>
+            <td>{{ appointmentStats.averagePerDay?.toFixed(1) || 0 }}/jour</td>
+            <td>+0.5</td>
+            <td><span class="trend-badge positive">↑</span></td>
+          </tr>
+          <tr>
+            <td>Jour le plus chargé</td>
+            <td>{{ appointmentStats.peakDay?.count || 0 }} RDV</td>
+            <td>{{ appointmentStats.peakDay?.date | date:'dd/MM/yyyy' }}</td>
+            <td>-</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Tableau utilisateurs -->
+    <div class="data-table" *ngIf="reportType === 'users'">
+      <h3>Statistiques des Utilisateurs</h3>
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Nombre</th>
+            <th>Pourcentage</th>
+            <th>Croissance</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Total utilisateurs</td>
+            <td>{{ userStats.total || 0 }}</td>
+            <td>100%</td>
+            <td><span class="trend-badge positive">+{{ userStats.growthRate || 0 }}%</span></td>
+          </tr>
+          <tr>
+            <td>Médecins</td>
+            <td>{{ userStats.doctors || 0 }}</td>
+            <td>{{ (userStats.doctors / userStats.total * 100) || 0 | number:'1.0-1' }}%</td>
+            <td><span class="trend-badge positive">+8%</span></td>
+          </tr>
+          <tr>
+            <td>Patients</td>
+            <td>{{ userStats.patients || 0 }}</td>
+            <td>{{ (userStats.patients / userStats.total * 100) || 0 | number:'1.0-1' }}%</td>
+            <td><span class="trend-badge positive">+15%</span></td>
+          </tr>
+          <tr>
+            <td>Administrateurs</td>
+            <td>{{ userStats.admins || 0 }}</td>
+            <td>{{ (userStats.admins / userStats.total * 100) || 0 | number:'1.0-1' }}%</td>
+            <td><span class="trend-badge">=</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Tableau financier -->
+    <div class="data-table" *ngIf="reportType === 'financial'">
+      <h3>Indicateurs Financiers</h3>
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Indicateur</th>
+            <th>Valeur</th>
+            <th>Cible</th>
+            <th>Performance</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Chiffre d'affaires total</td>
+            <td>{{ financialStats.totalRevenue || 0 | currency:'EUR':'symbol':'1.0-0' }}</td>
+            <td>15 000 €</td>
+            <td><span class="performance-badge excellent">Dépassé</span></td>
+          </tr>
+          <tr>
+            <td>Panier moyen</td>
+            <td>{{ financialStats.averageRevenuePerAppointment || 0 | currency:'EUR':'symbol':'1.0-0' }}</td>
+            <td>45 €</td>
+            <td><span class="performance-badge good">Atteint</span></td>
+          </tr>
+          <tr>
+            <td>Croissance mensuelle</td>
+            <td>{{ financialStats.monthlyGrowth || 0 }}%</td>
+            <td>10%</td>
+            <td><span class="performance-badge excellent">Dépassé</span></td>
+          </tr>
+          <tr>
+            <td>Spécialité la plus rentable</td>
+            <td>{{ financialStats.mostProfitableSpeciality || 'N/A' }}</td>
+            <td>-</td>
+            <td><span class="performance-badge">-</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- État de chargement -->
+  <div *ngIf="isLoading" class="loading-overlay">
+    <div class="loading-content">
+      <i class="fas fa-chart-line fa-spin"></i>
+      <h3>Génération des rapports...</h3>
+      <p>Analyse des données en cours</p>
+    </div>
+  </div>
+</div>

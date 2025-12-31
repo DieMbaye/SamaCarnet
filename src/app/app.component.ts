@@ -1,27 +1,29 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
+import { Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
-import { HeaderComponent } from './components/shared/header/header.component';
-import { AuthService } from './services/auth.service';
+import { AuthService } from './services/auth.service'; // ← IMPORT AJOUTÉ
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, HeaderComponent],
+  imports: [CommonModule, RouterOutlet],
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.css'],
 })
-export class AppComponent implements OnInit {
-  showHeader = false;
+export class AppComponent {
+  showHeader = true;
 
-  constructor(private authService: AuthService) {}
-
-  ngOnInit() {
-    this.authService.currentUser$.subscribe(user => {
-      this.showHeader = !!user;
-    });
-
-    // Initialiser le compte admin
-    this.authService.initializeAdmin();
+  constructor(
+    private router: Router,
+    public authService: AuthService // ← 'public' pour utiliser dans le template
+  ) {
+    this.router.events
+      .pipe(filter((event) => event instanceof NavigationEnd))
+      .subscribe((event: any) => {
+        const noHeaderRoutes = ['/login', '/register'];
+        this.showHeader = !noHeaderRoutes.includes(event.urlAfterRedirects);
+      });
   }
 }

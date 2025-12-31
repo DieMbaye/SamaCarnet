@@ -1,6 +1,15 @@
- <div class="app">
-      <app-header *ngIf="showHeader"></app-header>
-      <main class="main-content">
-        <router-outlet></router-outlet>
-      </main>
+<div class="app">
+  <!-- Écran de chargement -->
+  <div *ngIf="!(authService.authChecked$ | async)" class="loading-container">
+    <div class="loading-spinner">
+      <p>Vérification de l'authentification...</p>
     </div>
+  </div>
+
+  <!-- Contenu principal -->
+  <div *ngIf="authService.authChecked$ | async">
+    <main class="main-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

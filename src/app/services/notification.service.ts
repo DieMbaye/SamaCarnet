@@ -1,5 +1,9 @@
+// notification.service.ts
 import { Injectable } from '@angular/core';
-import { collection, query, where, getDocs, doc, addDoc, updateDoc, orderBy } from 'firebase/firestore';
+import { 
+  collection, query, where, getDocs, doc, addDoc, updateDoc, orderBy, 
+  Timestamp // ← Ajoutez cette importation
+} from 'firebase/firestore';
 import { FirebaseService } from './firebase.service';
 import { Notification } from '../models/user.model';
 
@@ -13,7 +17,7 @@ export class NotificationService {
     try {
       const docRef = await addDoc(collection(this.firebaseService.firestore, 'notifications'), {
         ...notificationData,
-        createdAt: new Date()
+        createdAt: Timestamp.fromDate(new Date()) // ← Utilisez Timestamp
       });
       return docRef.id;
     } catch (error) {
@@ -30,7 +34,16 @@ export class NotificationService {
         orderBy('createdAt', 'desc')
       );
       const querySnapshot = await getDocs(notificationsQuery);
-      return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Notification));
+      
+      return querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          // Convertir Timestamp en Date
+          createdAt: data['createdAt']?.toDate ? data['createdAt'].toDate() : new Date(data['createdAt'])
+        } as Notification;
+      });
     } catch (error) {
       console.error('Erreur lors de la récupération des notifications:', error);
       throw error;
@@ -41,7 +54,7 @@ export class NotificationService {
     try {
       await updateDoc(doc(this.firebaseService.firestore, 'notifications', notificationId), {
         read: true,
-        readAt: new Date()
+        readAt: Timestamp.fromDate(new Date()) // ← Utilisez Timestamp
       });
     } catch (error) {
       console.error('Erreur lors du marquage comme lu:', error);

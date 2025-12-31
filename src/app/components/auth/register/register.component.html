@@ -1,0 +1,213 @@
+<div class="register-container">
+  <div class="register-card">
+    <div class="register-header">
+      <div class="logo-container">
+        <h1>SamaCarnet</h1>
+        <div class="medical-icon">⚕️</div>
+      </div>
+      <p>Créez votre compte patient</p>
+    </div>
+
+    <form (ngSubmit)="onSubmit()" class="register-form" #registerForm="ngForm">
+      <!-- Informations de base -->
+      <div class="form-section">
+        <h3>Informations personnelles</h3>
+        
+        <div class="form-group">
+          <label for="displayName">Nom complet *</label>
+          <input
+            type="text"
+            id="displayName"
+            [(ngModel)]="registerData.displayName"
+            name="displayName"
+            required
+            placeholder="Votre nom complet"
+            class="form-input"
+            [class.invalid]="submitted && !registerData.displayName"
+          />
+          <div class="validation-error" *ngIf="submitted && !registerData.displayName">
+            Le nom complet est requis
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group half-width">
+            <label for="email">Email *</label>
+            <input
+              type="email"
+              id="email"
+              [(ngModel)]="registerData.email"
+              name="email"
+              required
+              placeholder="votre@email.com"
+              class="form-input"
+              [class.invalid]="submitted && !registerData.email"
+            />
+            <div class="validation-error" *ngIf="submitted && !registerData.email">
+              L'email est requis
+            </div>
+          </div>
+
+          <div class="form-group half-width">
+            <label for="phone">Téléphone</label>
+            <input
+              type="tel"
+              id="phone"
+              [(ngModel)]="registerData.phone"
+              name="phone"
+              placeholder="+33 1 23 45 67 89"
+              class="form-input"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Informations médicales supplémentaires -->
+      <div class="form-section">
+        <h3>Informations médicales</h3>
+        
+        <div class="form-group">
+          <label for="dateOfBirth">Date de naissance</label>
+          <input
+            type="date"
+            id="dateOfBirth"
+            [(ngModel)]="registerData.dateOfBirth"
+            name="dateOfBirth"
+            class="form-input"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="address">Adresse</label>
+          <textarea
+            id="address"
+            [(ngModel)]="registerData.address"
+            name="address"
+            placeholder="Votre adresse complète"
+            class="form-input"
+            rows="3"
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Mot de passe -->
+      <div class="form-section">
+        <h3>Sécurité du compte</h3>
+        
+        <div class="form-group">
+          <label for="password">Mot de passe *</label>
+          <div class="password-container">
+            <input
+              type="password"
+              id="password"
+              [(ngModel)]="registerData.password"
+              name="password"
+              required
+              placeholder="••••••••"
+              class="form-input"
+              minlength="6"
+              [class.invalid]="submitted && (!registerData.password || registerData.password.length < 6)"
+            />
+            <button type="button" class="password-toggle" (click)="togglePasswordVisibility('password')">
+              👁️
+            </button>
+          </div>
+          <div class="password-strength" *ngIf="registerData.password">
+            <div class="strength-bar" [class]="getPasswordStrength()"></div>
+            <small class="form-hint">{{ getPasswordHint() }}</small>
+          </div>
+          <div class="validation-error" *ngIf="submitted && (!registerData.password || registerData.password.length < 6)">
+            Le mot de passe doit contenir au moins 6 caractères
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="confirmPassword">Confirmer le mot de passe *</label>
+          <div class="password-container">
+            <input
+              type="password"
+              id="confirmPassword"
+              [(ngModel)]="registerData.confirmPassword"
+              name="confirmPassword"
+              required
+              placeholder="••••••••"
+              class="form-input"
+              [class.invalid]="submitted && registerData.password !== registerData.confirmPassword"
+            />
+            <button type="button" class="password-toggle" (click)="togglePasswordVisibility('confirmPassword')">
+              👁️
+            </button>
+          </div>
+          <div class="validation-error" *ngIf="submitted && registerData.password !== registerData.confirmPassword">
+            Les mots de passe ne correspondent pas
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <div class="messages-container">
+          <div class="error-message" *ngIf="errorMessage">
+            ❌ {{ errorMessage }}
+          </div>
+
+          <div class="success-message" *ngIf="successMessage">
+            ✅ {{ successMessage }}
+          </div>
+        </div>
+
+        <button type="submit" class="register-btn" [disabled]="isLoading">
+          <span class="btn-content">
+            <span class="btn-text">{{ isLoading ? "Création..." : "Créer mon compte" }}</span>
+            <span class="btn-spinner" *ngIf="isLoading">⏳</span>
+          </span>
+        </button>
+
+        <div class="login-link">
+          <p>Déjà un compte ? 
+            <a routerLink="/login" class="login-link-text">Se connecter</a>
+          </p>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal de déconnexion -->
+<div *ngIf="showLogoutModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>⚠️ Compte déjà connecté</h3>
+    </div>
+    
+    <div class="modal-body">
+      <p>Vous êtes actuellement connecté avec un compte.</p>
+      <p>Pour créer un nouveau compte, vous devez d'abord vous déconnecter.</p>
+      
+      <div class="current-user-info" *ngIf="currentUser">
+        <strong>Compte actuel :</strong>
+        <div class="user-details">
+          {{ currentUser.displayName }} 
+          ({{ currentUser.email }})
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button 
+        type="button" 
+        class="btn-secondary"
+        (click)="onCancelLogout()"
+      >
+        Retour au tableau de bord
+      </button>
+      
+      <button 
+        type="button" 
+        class="btn-primary"
+        (click)="onLogout()"
+      >
+        Se déconnecter et créer un compte
+      </button>
+    </div>
+  </div>
+</div>

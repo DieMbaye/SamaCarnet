@@ -1,0 +1,191 @@
+<!-- components/patient/overview/patient-overview.component.html -->
+<div class="patient-overview">
+  <!-- Header patient spécifique -->
+  <div class="dashboard-header patient-header">
+    <div class="patient-profile">
+      <div class="avatar">
+        <i class="fas fa-user"></i>
+      </div>
+      <div class="profile-info">
+        <h1>Bienvenue, {{ currentUser?.displayName }}</h1>
+        <div class="profile-stats">
+          <span class="stat">
+            <i class="fas fa-calendar-check"></i>
+            {{ stats.upcomingAppointments }} RDV à venir
+          </span>
+          <span class="stat">
+            <i class="fas fa-file-medical"></i>
+            {{ stats.medicalRecords }} Documents médicaux
+          </span>
+          <span class="stat">
+            <i class="fas fa-user-md"></i>
+            {{ stats.activeDoctors }} Médecins suivants
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button
+        class="btn-primary"
+        (click)="navigateToAppointments()"
+        [disabled]="isLoading"
+      >
+        <i class="fas fa-calendar-plus"></i>
+        Prendre RDV
+      </button>
+      <button
+        class="btn-secondary"
+        (click)="onRefresh()"
+        [disabled]="isLoading"
+      >
+        <i class="fas fa-sync-alt" [class.fa-spin]="isLoading"></i>
+        {{ isLoading ? 'Actualisation...' : 'Actualiser' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Widgets -->
+  <div class="dashboard-widgets">
+    <!-- Widget prochains RDV -->
+    <div class="widget upcoming-appointments">
+      <div class="widget-header">
+        <h3><i class="fas fa-calendar-alt"></i> Prochains rendez-vous</h3>
+        <button class="btn-link" (click)="navigateToAppointments()">
+          Voir tout
+        </button>
+      </div>
+      <div class="widget-content">
+        <div *ngFor="let appointment of upcomingAppointments" class="appointment-item">
+          <div class="appointment-info">
+            <div class="appointment-date">
+              <strong>{{ appointment.date | date:'dd/MM/yyyy' }}</strong>
+              <span class="appointment-time">{{ appointment.time }}</span>
+            </div>
+            <p class="doctor-name">Dr. {{ appointment.doctorName || 'Médecin' }}</p>
+            <p class="appointment-reason">{{ appointment.reason }}</p>
+          </div>
+          <span class="status-badge" [class]="'status-' + appointment.status">
+            {{ getStatusDisplay(appointment.status) }}
+          </span>
+        </div>
+        <div *ngIf="upcomingAppointments.length === 0" class="no-data">
+          <div class="empty-state">
+            <i class="fas fa-calendar-times"></i>
+            <p>Aucun rendez-vous à venir</p>
+            <button class="btn-small btn-primary" (click)="navigateToAppointments()">
+              Prendre un RDV
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Widget dossier médical -->
+    <div class="widget medical-summary">
+      <div class="widget-header">
+        <h3><i class="fas fa-file-medical"></i> Dossier médical</h3>
+        <button class="btn-link" (click)="navigateToMedicalRecords()">
+          Voir tout
+        </button>
+      </div>
+      <div class="widget-content">
+        <div class="summary-grid">
+          <div class="summary-item">
+            <div class="item-icon">
+              <i class="fas fa-stethoscope"></i>
+            </div>
+            <div class="item-content">
+              <span class="item-label">Dernière consultation</span>
+              <span class="item-value">15/01/2024</span>
+            </div>
+          </div>
+          <div class="summary-item">
+            <div class="item-icon">
+              <i class="fas fa-prescription-bottle"></i>
+            </div>
+            <div class="item-content">
+              <span class="item-label">Ordonnances actives</span>
+              <span class="item-value">3</span>
+            </div>
+          </div>
+          <div class="summary-item">
+            <div class="item-icon">
+              <i class="fas fa-allergies"></i>
+            </div>
+            <div class="item-content">
+              <span class="item-label">Allergies</span>
+              <span class="item-value">2</span>
+            </div>
+          </div>
+          <div class="summary-item">
+            <div class="item-icon">
+              <i class="fas fa-virus"></i>
+            </div>
+            <div class="item-content">
+              <span class="item-label">Vaccinations</span>
+              <span class="item-value">5</span>
+            </div>
+          </div>
+        </div>
+        <button class="btn-full" (click)="navigateToMedicalRecords()">
+          <i class="fas fa-folder-open"></i>
+          Ouvrir mon dossier complet
+        </button>
+      </div>
+    </div>
+
+    <!-- Widget actions rapides -->
+    <div class="widget quick-actions-widget">
+      <h3><i class="fas fa-bolt"></i> Actions rapides</h3>
+      <div class="widget-content">
+        <div class="quick-actions-grid">
+          <button class="quick-action-btn" (click)="navigateToAppointments()">
+            <div class="action-icon">
+              <i class="fas fa-calendar-plus"></i>
+            </div>
+            <span class="action-label">Prendre RDV</span>
+          </button>
+          
+          <button class="quick-action-btn" (click)="navigateToMedicalRecords()">
+            <div class="action-icon">
+              <i class="fas fa-file-upload"></i>
+            </div>
+            <span class="action-label">Ajouter document</span>
+          </button>
+          
+          <button class="quick-action-btn" routerLink="/patient/find-doctor">
+            <div class="action-icon">
+              <i class="fas fa-search"></i>
+            </div>
+            <span class="action-label">Trouver médecin</span>
+          </button>
+          
+          <button class="quick-action-btn" routerLink="/patient/prescriptions">
+            <div class="action-icon">
+              <i class="fas fa-prescription"></i>
+            </div>
+            <span class="action-label">Mes ordonnances</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section urgences -->
+  <div class="emergency-section">
+    <div class="emergency-card">
+      <div class="emergency-icon">
+        <i class="fas fa-phone-alt"></i>
+      </div>
+      <div class="emergency-content">
+        <h4>Urgences médicales</h4>
+        <p>En cas d'urgence, contactez le 15 (SAMU)</p>
+        <div class="emergency-numbers">
+          <span>📞 SAMU: 15</span>
+          <span>📞 Pompiers: 18</span>
+          <span>📞 Urgence européenne: 112</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

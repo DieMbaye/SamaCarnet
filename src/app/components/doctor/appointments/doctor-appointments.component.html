@@ -1,0 +1,891 @@
+<div class="appointments-container">
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="loading-spinner"></div>
+    <p>Chargement des rendez-vous...</p>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!isLoading" class="appointments-content">
+    <!-- Header with Filters -->
+    <div class="appointments-header">
+      <div class="header-main">
+        <h1>Gestion des Rendez-vous</h1>
+        <!-- Dans la section header, mettez à jour les statistiques -->
+        <div class="appointments-stats">
+          <div class="stat-item">
+            <span class="stat-number">{{ pendingAppointments.length }}</span>
+            <span class="stat-label">En attente</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">{{ confirmedAppointments.length }}</span>
+            <span class="stat-label">Confirmés</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">{{ completedAppointments.length }}</span>
+            <span class="stat-label">Terminés</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">{{ cancelledAppointments.length }}</span>
+            <span class="stat-label">Annulés</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <div class="search-box">
+          <i class="fas fa-search search-icon"></i>
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (input)="onSearchChange()"
+            placeholder="Rechercher un patient, un motif, notes..."
+            class="search-input"
+          />
+          <button
+            *ngIf="searchTerm"
+            class="clear-search"
+            (click)="searchTerm = ''; onSearchChange()"
+            aria-label="Effacer la recherche"
+          >
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div class="sort-box">
+          <select
+            [(ngModel)]="sortOption"
+            (change)="onSortChange()"
+            class="sort-select"
+          >
+            <option *ngFor="let option of sortOptions" [value]="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+          <i class="fas fa-sort sort-icon"></i>
+        </div>
+
+        <button
+          class="btn-secondary"
+          (click)="refreshData()"
+          [disabled]="isLoading"
+        >
+          <i class="fas fa-sync-alt" [class.fa-spin]="isLoading"></i>
+          Actualiser
+        </button>
+      </div>
+    </div>
+
+    <!-- Pending Appointments Section -->
+    <div class="appointments-section" *ngIf="pendingAppointments.length > 0">
+      <div class="section-header">
+        <div class="section-title">
+          <i class="fas fa-clock section-icon warning"></i>
+          <h2>Rendez-vous en Attente</h2>
+          <span class="count-badge warning">{{
+            pendingAppointments.length
+          }}</span>
+        </div>
+        <p class="section-subtitle">
+          Rendez-vous nécessitant votre confirmation
+        </p>
+      </div>
+
+      <div class="appointments-grid">
+        <div
+          *ngFor="let appointment of pendingAppointments"
+          class="appointment-card pending"
+        >
+          <div class="appointment-header">
+            <div class="patient-avatar">
+              <i class="fas fa-user"></i>
+            </div>
+            <div class="appointment-main-info">
+              <h4 class="patient-name">
+                {{ getPatientName(appointment.patientId) }}
+              </h4>
+              <div class="appointment-meta">
+                <span class="appointment-date-time">
+                  <i class="fas fa-calendar"></i>
+                  {{
+                    formatAppointmentTime(appointment.date, appointment.time)
+                  }}
+                </span>
+                <span class="appointment-duration">
+                  <i class="fas fa-clock"></i>
+                  30 min
+                </span>
+              </div>
+             <!-- <div class="patient-contact">
+                <i class="fas fa-envelope"></i>
+                {{ getPatientContactInfo(appointment.patientId) }}
+              </div>-->
+            </div>
+            <div class="appointment-status">
+              <span class="status-badge warning">
+                {{ getAppointmentStatusText(appointment.status) }}
+              </span>
+              <div
+                class="urgency-indicator"
+                *ngIf="isUrgentAppointment(appointment)"
+              >
+                <i class="fas fa-exclamation-circle"></i> Urgent
+              </div>
+            </div>
+          </div>
+
+          <div class="appointment-details">
+            <div class="detail-row">
+              <strong>Motif de consultation:</strong>
+              <span class="reason-preview">{{
+                getReasonPreview(appointment.reason)
+              }}</span>
+            </div>
+            <div class="detail-row" *ngIf="appointment.notes">
+              <strong>Notes préliminaires du patient:</strong>
+              <div class="notes-container">
+                <p class="notes-preview">
+                  {{ getPatientNotesPreview(appointment.notes) }}
+                </p>
+                <button
+                  class="btn-view-more"
+                  (click)="showAppointmentDetails(appointment)"
+                >
+                  <i class="fas fa-expand-alt"></i> Voir tous les détails
+                </button>
+              </div>
+            </div>
+            <div class="detail-row" *ngIf="!appointment.notes">
+              <strong>Notes préliminaires:</strong>
+              <span class="no-notes">Aucune note fournie par le patient</span>
+            </div>
+            <div class="detail-row">
+              <strong>Demandé le:</strong>
+              <span>{{ appointment.createdAt | date : "medium" : "fr" }}</span>
+            </div>
+          </div>
+
+          <div class="appointment-actions">
+            <button
+              class="btn-action confirm"
+              (click)="showConfirmation('confirm', appointment)"
+              [disabled]="actionInProgress"
+            >
+              <i class="fas fa-check"></i>
+              Confirmer
+            </button>
+            <button
+              class="btn-action reject"
+              (click)="showConfirmation('reject', appointment)"
+              [disabled]="actionInProgress"
+            >
+              <i class="fas fa-times"></i>
+              Refuser
+            </button>
+            <button
+              class="btn-action secondary"
+              (click)="showAppointmentDetails(appointment)"
+              [disabled]="actionInProgress"
+            >
+              <i class="fas fa-eye"></i> Détails complets
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirmed Appointments Section -->
+    <div class="appointments-section" *ngIf="confirmedAppointments.length > 0">
+      <div class="section-header">
+        <div class="section-title">
+          <i class="fas fa-calendar-check section-icon success"></i>
+          <h2>Rendez-vous Confirmés</h2>
+          <span class="count-badge success">{{
+            confirmedAppointments.length
+          }}</span>
+        </div>
+        <p class="section-subtitle">Rendez-vous à venir confirmés</p>
+      </div>
+
+      <div class="appointments-grid">
+        <div
+          *ngFor="let appointment of confirmedAppointments"
+          class="appointment-card confirmed"
+        >
+          <div class="appointment-header">
+            <div class="patient-avatar">
+              <i class="fas fa-user"></i>
+            </div>
+            <div class="appointment-main-info">
+              <h4 class="patient-name">
+                {{ getPatientName(appointment.patientId) }}
+              </h4>
+              <div class="appointment-meta">
+                <span class="appointment-date-time">
+                  <i class="fas fa-calendar"></i>
+                  {{
+                    formatAppointmentTime(appointment.date, appointment.time)
+                  }}
+                </span>
+                <span class="appointment-duration">
+                  <i class="fas fa-clock"></i>
+                  30 min
+                </span>
+              </div>
+            </div>
+            <div class="appointment-status">
+              <span class="status-badge success">
+                {{ getAppointmentStatusText(appointment.status) }}
+              </span>
+            </div>
+          </div>
+
+          <div class="appointment-details">
+            <div class="detail-row">
+              <strong>Motif:</strong>
+              <span class="reason-preview">{{
+                getReasonPreview(appointment.reason)
+              }}</span>
+            </div>
+            <div class="detail-row" *ngIf="appointment.notes">
+              <strong>Notes du patient:</strong>
+              <p class="notes-preview patient-notes">
+                {{ getPatientNotesPreview(appointment.notes) }}
+              </p>
+            </div>
+            <div class="detail-row" *ngIf="appointment.doctorNotes">
+              <strong>Mes notes:</strong>
+              <p class="notes-preview doctor-notes">
+                {{ truncateText(appointment.doctorNotes, 60) }}
+              </p>
+            </div>
+          </div>
+
+          <div class="appointment-actions">
+            <button
+              class="btn-action complete"
+              (click)="showConfirmation('complete', appointment)"
+              [disabled]="actionInProgress"
+            >
+              <i class="fas fa-check-double"></i>
+              Terminer
+            </button>
+            <button
+              class="btn-action secondary"
+              (click)="showAppointmentDetails(appointment)"
+              [disabled]="actionInProgress"
+            >
+              <i class="fas fa-eye"></i> Détails
+            </button>
+            <button
+              class="btn-action edit"
+              (click)="showNotesForm(appointment)"
+              [disabled]="actionInProgress"
+            >
+              <i class="fas fa-edit"></i> Notes
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Completed Appointments Section -->
+    <div class="appointments-section" *ngIf="completedAppointments.length > 0">
+      <div class="section-header">
+        <div class="section-title">
+          <i class="fas fa-check-circle section-icon info"></i>
+          <h2>Rendez-vous Terminés</h2>
+          <span class="count-badge info">{{
+            completedAppointments.length
+          }}</span>
+        </div>
+        <p class="section-subtitle">Historique des consultations terminées</p>
+      </div>
+
+      <div class="appointments-grid">
+        <div
+          *ngFor="let appointment of completedAppointments"
+          class="appointment-card completed"
+        >
+          <div class="appointment-header">
+            <div class="patient-avatar">
+              <i class="fas fa-user"></i>
+            </div>
+            <div class="appointment-main-info">
+              <h4 class="patient-name">
+                {{ getPatientName(appointment.patientId) }}
+              </h4>
+              <div class="appointment-meta">
+                <span class="appointment-date-time">
+                  <i class="fas fa-calendar"></i>
+                  {{
+                    formatAppointmentTime(appointment.date, appointment.time)
+                  }}
+                </span>
+                <span class="appointment-duration">
+                  <i class="fas fa-clock"></i>
+                  30 min
+                </span>
+              </div>
+            </div>
+            <div class="appointment-status">
+              <span class="status-badge info">
+                {{ getAppointmentStatusText(appointment.status) }}
+              </span>
+            </div>
+          </div>
+
+          <div class="appointment-details">
+            <div class="detail-row">
+              <strong>Motif:</strong>
+              <span class="reason-preview">{{
+                getReasonPreview(appointment.reason)
+              }}</span>
+            </div>
+            <div class="detail-row" *ngIf="appointment.notes">
+              <strong>Notes initiales du patient:</strong>
+              <p class="notes-preview patient-notes">
+                {{ getPatientNotesPreview(appointment.notes) }}
+              </p>
+            </div>
+            <div class="detail-row" *ngIf="appointment.doctorNotes">
+              <strong>Notes de consultation:</strong>
+              <p class="notes-preview doctor-notes">
+                {{ truncateText(appointment.doctorNotes, 60) }}
+              </p>
+            </div>
+          </div>
+
+          <div class="appointment-actions">
+            <button
+              class="btn-action secondary"
+              (click)="showAppointmentDetails(appointment)"
+            >
+              <i class="fas fa-eye"></i> Voir consultation
+            </button>
+            <button
+              class="btn-action edit"
+              (click)="showNotesForm(appointment)"
+            >
+              <i class="fas fa-edit"></i> Modifier notes
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="appointments-section" *ngIf="cancelledAppointments.length > 0">
+      <div class="section-header">
+        <div class="section-title">
+          <i class="fas fa-times-circle section-icon error"></i>
+          <h2>Rendez-vous Annulés/Refusés</h2>
+          <span class="count-badge error">{{
+            cancelledAppointments.length
+          }}</span>
+        </div>
+        <p class="section-subtitle">
+          Historique des rendez-vous annulés ou refusés
+        </p>
+      </div>
+
+      <div class="appointments-grid">
+        <div
+          *ngFor="let appointment of cancelledAppointments"
+          class="appointment-card cancelled"
+        >
+          <div class="appointment-header">
+            <div class="patient-avatar cancelled-avatar">
+              <i class="fas fa-user"></i>
+            </div>
+            <div class="appointment-main-info">
+              <h4 class="patient-name">
+                {{ getPatientName(appointment.patientId) }}
+              </h4>
+              <div class="appointment-meta">
+                <span class="appointment-date-time">
+                  <i class="fas fa-calendar"></i>
+                  {{
+                    formatAppointmentTime(appointment.date, appointment.time)
+                  }}
+                </span>
+                <span class="appointment-duration">
+                  <i class="fas fa-clock"></i>
+                  30 min
+                </span>
+              </div>
+             <!-- <div class="patient-contact">
+                <i class="fas fa-envelope"></i>
+                {{ getPatientContactInfo(appointment.patientId) }}
+              </div> -->
+            </div>
+            <div class="appointment-status">
+              <span class="status-badge error">
+                {{ getAppointmentStatusText(appointment.status) }}
+              </span>
+            </div>
+          </div>
+
+          <div class="appointment-details">
+            <div class="detail-row">
+              <strong>Motif initial:</strong>
+              <span class="reason-preview">{{
+                getReasonPreview(appointment.reason)
+              }}</span>
+            </div>
+
+            <div class="detail-row" *ngIf="appointment.cancellationReason">
+              <strong>Raison de l'annulation:</strong>
+              <p class="cancellation-reason-preview">
+                {{ getCancellationReason(appointment) }}
+              </p>
+            </div>
+
+            <div class="detail-row" *ngIf="appointment.cancelledAt">
+              <strong>Annulé le:</strong>
+              <span>{{ formatShortDate(appointment.cancelledAt) }}</span>
+            </div>
+
+            <div class="detail-row" *ngIf="appointment.notes">
+              <strong>Notes du patient:</strong>
+              <p class="notes-preview patient-notes">
+                {{ getPatientNotesPreview(appointment.notes) }}
+              </p>
+            </div>
+
+            <div class="detail-row" *ngIf="appointment.doctorNotes">
+              <strong>Notes du médecin:</strong>
+              <p class="notes-preview doctor-notes">
+                {{ truncateText(appointment.doctorNotes, 60) }}
+              </p>
+            </div>
+
+            <div class="detail-row">
+              <strong>Demandé le:</strong>
+              <span>{{ formatShortDate(appointment.createdAt) }}</span>
+            </div>
+          </div>
+
+          <div class="appointment-actions">
+            <button
+              class="btn-action secondary"
+              (click)="showAppointmentDetails(appointment)"
+            >
+              <i class="fas fa-eye"></i> Voir détails
+            </button>
+            <button
+              class="btn-action archive"
+              (click)="showConfirmation('cancel', appointment)"
+              *ngIf="false"
+            >
+              <i class="fas fa-archive"></i> Archiver
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty States -->
+    <div
+      *ngIf="
+        pendingAppointments.length === 0 &&
+        confirmedAppointments.length === 0 &&
+        completedAppointments.length === 0 &&
+        cancelledAppointments.length === 0
+      "
+      class="empty-state"
+    >
+      <div class="empty-icon">
+        <i class="fas fa-calendar-times"></i>
+      </div>
+      <h3>Aucun rendez-vous trouvé</h3>
+      <p *ngIf="searchTerm">
+        Aucun rendez-vous ne correspond à "{{ searchTerm }}"
+      </p>
+      <p *ngIf="!searchTerm">
+        Aucun rendez-vous dans votre agenda pour le moment
+      </p>
+      <button class="btn-primary" (click)="resetFilters()" *ngIf="searchTerm">
+        Réinitialiser la recherche
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Consultation Details Modal -->
+<div class="modal" *ngIf="showNotesModal && modalType === 'consultation'">
+  <div class="modal-content large-modal">
+    <div class="modal-header">
+      <h3>Détails complets de la consultation</h3>
+      <button class="btn-close" (click)="closeNotesModal()" aria-label="Fermer">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Patient Information -->
+      <div class="section-modal">
+        <h4><i class="fas fa-user-injured"></i> Informations Patient</h4>
+        <div class="info-grid">
+          <div class="info-item">
+            <strong>Nom complet:</strong>
+            <span>{{
+              selectedAppointment
+                ? getPatientName(selectedAppointment.patientId)
+                : ""
+            }}</span>
+          </div>
+          <div class="info-item">
+            <strong>Contact:</strong>
+            <span>{{
+              selectedAppointment
+                ? getPatientContactInfo(selectedAppointment.patientId)
+                : ""
+            }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Appointment Information -->
+      <div class="section-modal">
+        <h4><i class="fas fa-calendar-alt"></i> Informations Rendez-vous</h4>
+        <div class="info-grid">
+          <div class="info-item">
+            <strong>Date et heure:</strong>
+            <span
+              >{{
+                selectedAppointment
+                  ? formatAppointmentDate(selectedAppointment.date)
+                  : ""
+              }}
+              à {{ selectedAppointment?.time }}</span
+            >
+          </div>
+          <div class="info-item">
+            <strong>Statut:</strong>
+            <span
+              class="status-badge {{
+                getAppointmentStatusBadge(selectedAppointment?.status || '')
+              }}"
+            >
+              {{
+                selectedAppointment
+                  ? getAppointmentStatusText(selectedAppointment.status)
+                  : ""
+              }}
+            </span>
+          </div>
+          <div class="info-item">
+            <strong>Demandé le:</strong>
+            <span>{{
+              selectedAppointment?.createdAt | date : "medium" : "fr"
+            }}</span>
+          </div>
+          <div *ngIf="selectedAppointment?.confirmedAt" class="info-item">
+            <strong>Confirmé le:</strong>
+            <span>{{
+              selectedAppointment?.confirmedAt | date : "medium" : "fr"
+            }}</span>
+          </div>
+          <div *ngIf="selectedAppointment?.cancelledAt" class="info-item">
+            <strong>Refusé le:</strong>
+            <span>{{
+              selectedAppointment?.cancelledAt | date : "medium" : "fr"
+            }}</span>
+          </div>
+          <div
+            *ngIf="selectedAppointment?.cancellationReason"
+            class="info-item"
+          >
+            <strong>Raison du refus:</strong>
+            <span class="cancellation-reason">{{
+              selectedAppointment?.cancellationReason
+            }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Patient Preliminary Notes (TOUS les détails) -->
+      <div class="section-modal">
+        <h4><i class="fas fa-sticky-note"></i> Informations du patient</h4>
+        <div class="notes-section patient-notes">
+          <div class="full-reason">
+            <strong>Motif complet de consultation:</strong>
+            <div class="reason-content">
+              {{ selectedAppointment?.reason || "Non spécifié" }}
+            </div>
+          </div>
+
+          <div *ngIf="selectedAppointment?.notes" class="full-notes">
+            <strong>Notes préliminaires complètes:</strong>
+            <div class="notes-content">
+              {{ selectedAppointment?.notes }}
+            </div>
+          </div>
+
+          <div *ngIf="!selectedAppointment?.notes" class="no-notes">
+            Aucune note supplémentaire fournie par le patient
+          </div>
+        </div>
+      </div>
+
+      <!-- Doctor Notes Section -->
+      <div class="section-modal">
+        <h4><i class="fas fa-user-md"></i> Notes médicales</h4>
+        <div class="form-group">
+          <label
+            >Notes de consultation (diagnostic, traitement,
+            prescriptions...):</label
+          >
+          <textarea
+            [(ngModel)]="doctorNotes"
+            rows="8"
+            placeholder="Notes sur la consultation, diagnostic, traitement, prescriptions, recommandations..."
+            class="notes-textarea"
+          ></textarea>
+          <small class="form-hint"
+            >Ces notes seront visibles dans le dossier médical</small
+          >
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button
+        (click)="saveNotes()"
+        class="btn-primary"
+        [disabled]="actionInProgress || !doctorNotes.trim()"
+      >
+        <i class="fas fa-save"></i>
+        {{ actionInProgress ? "Sauvegarde..." : "Sauvegarder les notes" }}
+      </button>
+      <button (click)="closeNotesModal()" class="btn-secondary">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation Modal with Notes -->
+<div
+  class="modal"
+  *ngIf="showConfirmationModal && modalType === 'confirmation'"
+>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>{{ confirmationModal.title }}</h3>
+      <button
+        class="btn-close"
+        (click)="closeConfirmationModal()"
+        aria-label="Fermer"
+      >
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <p>{{ confirmationModal.message }}</p>
+
+      <div class="appointment-preview">
+        <div class="preview-item">
+          <strong>Patient:</strong>
+          <span>{{
+            selectedAppointment
+              ? getPatientName(selectedAppointment.patientId)
+              : ""
+          }}</span>
+        </div>
+        <div class="preview-item">
+          <strong>Date:</strong>
+          <span>{{
+            selectedAppointment
+              ? formatAppointmentDate(selectedAppointment.date)
+              : ""
+          }}</span>
+        </div>
+        <div class="preview-item">
+          <strong>Heure:</strong>
+          <span>{{ selectedAppointment?.time }}</span>
+        </div>
+        <div class="preview-item">
+          <strong>Motif:</strong>
+          <span>{{ selectedAppointment?.reason }}</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Notes facultatives pour le patient (optionnel):</label>
+        <textarea
+          [(ngModel)]="doctorNotes"
+          rows="4"
+          placeholder="Vous pouvez ajouter des instructions ou informations supplémentaires pour le patient..."
+          class="notes-textarea"
+        ></textarea>
+        <small class="form-hint"
+          >Ces notes seront envoyées avec la confirmation</small
+        >
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button
+        class="btn-secondary"
+        (click)="closeConfirmationModal()"
+        [disabled]="actionInProgress"
+      >
+        Annuler
+      </button>
+      <button
+        class="btn-primary"
+        (click)="confirmWithNotes()"
+        [disabled]="actionInProgress"
+      >
+        <i class="fas fa-check"></i>
+        {{
+          actionInProgress ? "Confirmation..." : confirmationModal.confirmText
+        }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Rejection Modal with Required Reason -->
+<div class="modal" *ngIf="showRejectionModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Refuser le rendez-vous</h3>
+      <button
+        class="btn-close"
+        (click)="closeRejectionModal()"
+        aria-label="Fermer"
+      >
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="warning-message">
+        <i class="fas fa-exclamation-triangle"></i>
+        <p>
+          Vous êtes sur le point de refuser ce rendez-vous. Le patient sera
+          notifié.
+        </p>
+      </div>
+
+      <div class="appointment-preview">
+        <div class="preview-item">
+          <strong>Patient:</strong>
+          <span>{{
+            selectedAppointment
+              ? getPatientName(selectedAppointment.patientId)
+              : ""
+          }}</span>
+        </div>
+        <div class="preview-item">
+          <strong>Date prévue:</strong>
+          <span>{{
+            selectedAppointment
+              ? formatAppointmentDate(selectedAppointment.date)
+              : ""
+          }}</span>
+        </div>
+        <div class="preview-item">
+          <strong>Motif:</strong>
+          <span>{{ selectedAppointment?.reason }}</span>
+        </div>
+      </div>
+
+      <div class="form-group required">
+        <label>Raison du refus *</label>
+        <textarea
+          [(ngModel)]="rejectionReason"
+          rows="5"
+          placeholder="Veuillez expliquer la raison du refus. Cette information sera transmise au patient..."
+          class="notes-textarea"
+          required
+        ></textarea>
+        <small class="form-hint"
+          >Ce champ est obligatoire. Le patient recevra cette
+          explication.</small
+        >
+        <div
+          class="error-message"
+          *ngIf="!rejectionReason.trim() && actionInProgress"
+        >
+          Veuillez saisir une raison pour le refus
+        </div>
+      </div>
+
+      <div class="suggestion-box">
+        <p><strong>Suggestions de raisons:</strong></p>
+        <ul>
+          <li>Disponibilité limitée à cette date</li>
+          <li>Spécialité non adaptée à la demande</li>
+          <li>Délai trop court pour préparer la consultation</li>
+          <li>Autre rendez-vous programmé à cet horaire</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button
+        class="btn-secondary"
+        (click)="closeRejectionModal()"
+        [disabled]="actionInProgress"
+      >
+        Annuler
+      </button>
+      <button
+        class="btn-danger"
+        (click)="rejectWithReason()"
+        [disabled]="actionInProgress || !rejectionReason.trim()"
+      >
+        <i class="fas fa-times"></i>
+        {{ actionInProgress ? "Traitement..." : "Refuser le rendez-vous" }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Standard Confirmation Modal (for complete action) -->
+<div
+  class="modal"
+  *ngIf="showConfirmationModal && modalType !== 'confirmation'"
+>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>{{ confirmationModal.title }}</h3>
+      <button
+        class="btn-close"
+        (click)="closeConfirmationModal()"
+        aria-label="Fermer"
+      >
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <p>{{ confirmationModal.message }}</p>
+    </div>
+
+    <div class="modal-actions">
+      <button
+        class="btn-secondary"
+        (click)="closeConfirmationModal()"
+        [disabled]="actionInProgress"
+      >
+        Annuler
+      </button>
+      <button
+        [class]="confirmationModal.confirmClass"
+        (click)="executeConfirmedAction()"
+        [disabled]="actionInProgress"
+      >
+        <i
+          class="fas"
+          [class.fa-check]="confirmationModal.action === 'confirm'"
+          [class.fa-times]="confirmationModal.action === 'reject'"
+          [class.fa-check-double]="confirmationModal.action === 'complete'"
+        ></i>
+        {{ actionInProgress ? "Traitement..." : confirmationModal.confirmText }}
+      </button>
+    </div>
+  </div>
+</div>

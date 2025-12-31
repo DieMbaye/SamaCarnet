@@ -1,0 +1,382 @@
+<div class="schedule-container">
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="loading-spinner"></div>
+    <p>Chargement du planning...</p>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!isLoading" class="schedule-content">
+    
+    <!-- Calendar Header -->
+    <div class="calendar-header">
+      <div class="calendar-navigation">
+        <button class="btn-nav" (click)="previousPeriod()" aria-label="Période précédente">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        
+        <h2 class="calendar-title">
+          <span *ngIf="currentView === 'month'">
+            {{ currentDate | date:'MMMM yyyy':'fr' }}
+          </span>
+          <span *ngIf="currentView === 'week'">
+            <span *ngIf="calendarDays.length > 0">
+              Semaine du {{ calendarDays[0].date | date:'d MMMM':'fr' }}
+            </span>
+            <span *ngIf="calendarDays.length === 0">
+              Chargement...
+            </span>
+          </span>
+          <span *ngIf="currentView === 'day'">
+            {{ currentDate | date:'fullDate':'fr' }}
+          </span>
+        </h2>
+        
+        <button class="btn-nav" (click)="nextPeriod()" aria-label="Période suivante">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+        
+        <button class="btn-today" (click)="goToToday()">
+          Aujourd'hui
+        </button>
+      </div>
+
+      <div class="calendar-actions">
+        <div class="view-options">
+          <button 
+            class="view-btn" 
+            [class.active]="currentView === 'month'"
+            (click)="setView('month')"
+          >
+            Mois
+          </button>
+          <button 
+            class="view-btn" 
+            [class.active]="currentView === 'week'"
+            (click)="setView('week')"
+          >
+            Semaine
+          </button>
+          <button 
+            class="view-btn" 
+            [class.active]="currentView === 'day'"
+            (click)="setView('day')"
+          >
+            Jour
+          </button>
+        </div>
+
+        <button class="btn-primary" (click)="showAvailabilitySettings()">
+          <i class="fas fa-cog"></i> Disponibilités
+        </button>
+
+        <button class="btn-secondary" (click)="refreshData()" [disabled]="isLoading" aria-label="Actualiser le planning">
+          <i class="fas fa-sync-alt" [class.fa-spin]="isLoading"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Calendar View -->
+    <div class="calendar-view" [class]="'view-' + currentView">
+      
+      <!-- Month View -->
+      <div *ngIf="currentView === 'month'" class="month-view">
+        <div class="week-days-header">
+          <div *ngFor="let day of ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']" 
+               class="week-day">
+            {{ day }}
+          </div>
+        </div>
+        
+        <div class="month-grid">
+          <div 
+            *ngFor="let day of calendarDays" 
+            class="calendar-day"
+            [class.current-month]="day.isCurrentMonth"
+            [class.today]="day.isToday"
+            [class.selected]="day.date.toDateString() === selectedDate.toDateString()"
+            (click)="selectDate(day.date)"
+          >
+            <div class="day-header">
+              <span class="day-number">{{ day.date | date:'d' }}</span>
+              <span class="day-appointments" *ngIf="day.appointments.length > 0">
+                {{ day.appointments.length }}
+              </span>
+            </div>
+            
+            <div class="day-appointments-list">
+              <div 
+                *ngFor="let appointment of day.appointments.slice(0, 2)" 
+                class="appointment-preview"
+                [class]="'status-' + appointment.status"
+              >
+                <span class="appointment-time">{{ appointment.time }}</span>
+                <span class="appointment-patient">
+                  {{ getPatientName(appointment.patientId) | slice:0:8 }}{{ getPatientName(appointment.patientId).length > 8 ? '...' : '' }}
+                </span>
+              </div>
+              <div *ngIf="day.appointments.length > 2" class="more-appointments">
+                +{{ day.appointments.length - 2 }} autres
+              </div>
+            </div>
+            
+            <div class="available-slots" *ngIf="day.availableSlots.length > 0 && day.isCurrentMonth">
+              <span class="slots-count">{{ day.availableSlots.length }} créneaux</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Week View -->
+      <div *ngIf="currentView === 'week'" class="week-view">
+        <div class="week-header">
+          <div class="time-column"></div>
+          <div 
+            *ngFor="let day of calendarDays" 
+            class="week-day-header"
+            [class.today]="day.isToday"
+            [class.selected]="day.date.toDateString() === selectedDate.toDateString()"
+            (click)="selectDate(day.date)"
+          >
+            <div class="day-name">{{ getDayName(day.date.getDay()) }}</div>
+            <div class="day-date">{{ day.date | date:'d' }}</div>
+            <div class="day-appointments-count" *ngIf="day.appointments.length > 0">
+              {{ day.appointments.length }} RDV
+            </div>
+          </div>
+        </div>
+
+        <div class="week-time-grid">
+          <div class="time-slots">
+            <div *ngFor="let hour of [8,9,10,11,12,13,14,15,16,17,18]" class="time-slot">
+              {{ hour }}:00
+            </div>
+          </div>
+          
+          <div *ngFor="let day of calendarDays" class="day-column">
+            <div 
+              *ngFor="let hour of [8,9,10,11,12,13,14,15,16,17,18]" 
+              class="hour-slot"
+            >
+              <div 
+                *ngFor="let appointment of getAppointmentsForHour(day.date, hour)"
+                class="appointment-block"
+                [class]="'status-' + appointment.status"
+                (click)="selectedAppointment = appointment; showAppointmentModal = true"
+              >
+                <div class="appointment-time">{{ appointment.time }}</div>
+                <div class="appointment-patient">
+                  {{ getPatientName(appointment.patientId) }}
+                </div>
+                <div class="appointment-reason">{{ appointment.reason }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Day View -->
+      <div *ngIf="currentView === 'day'" class="day-view">
+        <div class="day-header">
+          <h3>{{ formatDate(selectedDate) }}</h3>
+          <div class="day-stats">
+            <span class="stat">{{ getAppointmentsForDate(selectedDate).length }} rendez-vous</span>
+            <span class="stat">{{ getAvailableSlotsForDate(selectedDate).length }} créneaux disponibles</span>
+          </div>
+        </div>
+
+        <div class="day-time-slots">
+          <div 
+            *ngFor="let slot of selectedTimeSlots" 
+            class="time-slot-item"
+            [class.available]="slot.isAvailable"
+            [class.booked]="!slot.isAvailable"
+          >
+            <div class="slot-time">{{ slot.time }}</div>
+            <div class="slot-status">
+              <span *ngIf="slot.isAvailable" class="available-badge">
+                <i class="fas fa-check-circle"></i> Disponible
+              </span>
+              <span *ngIf="!slot.isAvailable && slot.appointment" class="booked-badge">
+                <i class="fas fa-user-md"></i> {{ getPatientName(slot.appointment.patientId) }}
+                <span class="appointment-status" [class]="'status-' + slot.appointment.status">
+                  {{ slot.appointment.status === 'pending' ? 'En attente' : 'Confirmé' }}
+                </span>
+              </span>
+              <span *ngIf="!slot.isAvailable && !slot.appointment" class="unavailable-badge">
+                <i class="fas fa-times-circle"></i> Indisponible
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="schedule-stats">
+      <div class="stat-card">
+        <div class="stat-icon primary">
+          <i class="fas fa-calendar-check"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ getAppointmentsForDate(selectedDate).length }}</h3>
+          <p>RDV aujourd'hui</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon success">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ getAvailableSlotsForDate(selectedDate).length }}</h3>
+          <p>Créneaux disponibles</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon warning">
+          <i class="fas fa-user-injured"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ getUniquePatientsForDate(selectedDate).length }}</h3>
+          <p>Patients aujourd'hui</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Availability Modal -->
+<div class="modal" *ngIf="showAvailabilityModal">
+  <div class="modal-content large">
+    <div class="modal-header">
+      <h3>Gestion des Disponibilités</h3>
+      <button class="btn-close" (click)="closeAvailabilityModal()" aria-label="Fermer">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="availability-form">
+        <h4>Ajouter une plage horaire</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Jour de la semaine</label>
+            <select [(ngModel)]="availabilityForm.dayOfWeek" class="form-select">
+              <option [value]="1">Lundi</option>
+              <option [value]="2">Mardi</option>
+              <option [value]="3">Mercredi</option>
+              <option [value]="4">Jeudi</option>
+              <option [value]="5">Vendredi</option>
+              <option [value]="6">Samedi</option>
+              <option [value]="0">Dimanche</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label>Heure de début</label>
+            <input type="time" [(ngModel)]="availabilityForm.startTime" class="form-input" title="Debut">
+          </div>
+          
+          <div class="form-group">
+            <label>Heure de fin</label>
+            <input type="time" [(ngModel)]="availabilityForm.endTime" class="form-input" title="Fin">
+          </div>
+          
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" [(ngModel)]="availabilityForm.isActive">
+              <span class="checkmark"></span>
+              Actif
+            </label>
+          </div>
+        </div>
+        
+        <button class="btn-primary" (click)="addAvailability()">
+          <i class="fas fa-plus"></i> Ajouter
+        </button>
+      </div>
+
+      <div class="availability-list">
+        <h4>Plages horaires configurées</h4>
+        <div *ngFor="let availability of defaultAvailability; let i = index" 
+             class="availability-item">
+          <div class="availability-info">
+            <span class="day">{{ getDayName(availability.dayOfWeek) }}</span>
+            <span class="time">{{ availability.startTime }} - {{ availability.endTime }}</span>
+            <span class="status" [class.active]="availability.isActive">
+              {{ availability.isActive ? 'Actif' : 'Inactif' }}
+            </span>
+          </div>
+          <div class="availability-actions">
+            <button 
+              class="btn-sm" 
+              [class]="availability.isActive ? 'warning' : 'success'"
+              (click)="toggleAvailability(i)"
+            >
+              <i class="fas" [class.fa-toggle-on]="availability.isActive" [class.fa-toggle-off]="!availability.isActive"></i>
+              {{ availability.isActive ? 'Désactiver' : 'Activer' }}
+            </button>
+            <button class="btn-sm danger" (click)="removeAvailability(i)">
+              <i class="fas fa-trash"></i> Supprimer
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" (click)="closeAvailabilityModal()">
+        Fermer
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Appointment Details Modal -->
+<div class="modal" *ngIf="showAppointmentModal && selectedAppointment">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Détails du Rendez-vous</h3>
+      <button class="btn-close" (click)="closeAppointmentModal()" aria-label="Fermer">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="appointment-details">
+        <div class="detail-item">
+          <label>Patient:</label>
+          <span>{{ getPatientName(selectedAppointment.patientId) }}</span>
+        </div>
+        <div class="detail-item">
+          <label>Date et heure:</label>
+          <span>{{ formatDate(selectedAppointment.date) }} à {{ selectedAppointment.time }}</span>
+        </div>
+        <div class="detail-item">
+          <label>Motif:</label>
+          <span>{{ selectedAppointment.reason }}</span>
+        </div>
+        <div class="detail-item">
+          <label>Statut:</label>
+          <span class="status-badge" [class]="'status-' + selectedAppointment.status">
+            {{ selectedAppointment.status === 'pending' ? 'En attente' : 
+               selectedAppointment.status === 'confirmed' ? 'Confirmé' : 
+               selectedAppointment.status === 'completed' ? 'Terminé' : 'Annulé' }}
+          </span>
+        </div>
+        <div class="detail-item" *ngIf="selectedAppointment.notes">
+          <label>Notes:</label>
+          <p class="appointment-notes">{{ selectedAppointment.notes }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" (click)="closeAppointmentModal()">
+        Fermer
+      </button>
+    </div>
+  </div>
+</div>

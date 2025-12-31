@@ -1,11 +1,12 @@
 export const environment = {
   production: true,
   firebase: {
-  apiKey: "AIzaSyCt7Bh4fUfdqJEB719jaF1E2U2ZeiYTrtw",
-  authDomain: "medicare-c1d45.firebaseapp.com",
-  projectId: "medicare-c1d45",
-  storageBucket: "medicare-c1d45.firebasestorage.app",
-  messagingSenderId: "1097743874802",
-  appId: "1:1097743874802:web:524782902bafa607ab6e6b"
-  }
+    apiKey: "AIzaSyAQKDsE4zUtoudssBNvKBL5dZe_LDMW6aM",
+    authDomain: "samacarnet-25347.firebaseapp.com",
+    projectId: "samacarnet-25347",
+    storageBucket: "samacarnet-25347.firebasestorage.app",
+    messagingSenderId: "180901024470",
+    appId: "1:180901024470:web:8c6dabec1eb2eb48726f77",
+    measurementId: "G-Z3RWDRYRPK",
+  },
 };

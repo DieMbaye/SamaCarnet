@@ -1,0 +1,134 @@
+/* Container principal */
+.patient-container {
+  display: flex;
+  min-height: 100vh;
+  background: #ffffff;
+}
+
+/* Main content */
+.patient-main {
+  flex: 1;
+  margin-left: 280px;
+  transition: margin-left 0.3s ease;
+  min-height: 100vh;
+  position: relative;
+}
+
+.patient-main.expanded {
+  margin-left: 80px;
+}
+
+/* Sidebar Toggle Fixed */
+.sidebar-toggle-fixed {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 100;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.sidebar-toggle-fixed:hover {
+  background: #5a6fd8;
+  transform: translateY(-2px);
+}
+
+/* Mobile Header */
+.mobile-header {
+  display: none;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: white;
+  border-bottom: 1px solid #e9ecef;
+  margin-bottom: 2rem;
+}
+
+.mobile-toggle {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: #5a6c7d;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: background 0.3s ease;
+}
+
+.mobile-toggle:hover {
+  background: #f8f9fa;
+}
+
+.mobile-header h1 {
+  margin: 0;
+  font-size: 1.3rem;
+  color: #2c3e50;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .patient-main {
+    margin-left: 80px;
+  }
+}
+
+@media (max-width: 768px) {
+  .patient-main {
+    margin-left: 0;
+    padding: var(--space-sm);
+  }
+
+  .mobile-header {
+    display: flex;
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 40;
+    padding: var(--space-sm);
+    margin: calc(-1 * var(--space-sm));
+    margin-bottom: var(--space-md);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .patient-main.expanded {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .patient-main {
+    padding: 0.75rem;
+  }
+
+  .mobile-header {
+    padding: 0.75rem;
+    margin: -0.75rem -0.75rem var(--space-sm);
+  }
+
+  .mobile-toggle {
+    width: 40px;
+    height: 40px;
+  }
+
+  .mobile-header h1 {
+    font-size: 1.25rem;
+  }
+}
+/* Section Content */
+.section-content {
+  animation: _ngcontent-ng-c1226781672_fadeInUp 0.5s ease-out;
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
