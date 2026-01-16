@@ -1,6 +1,11 @@
 import { Component, OnInit, HostListener, OnDestroy } from "@angular/core";
 import { CommonModule } from "@angular/common";
-import { RouterModule, Router, ActivatedRoute, NavigationEnd } from "@angular/router";
+import {
+  RouterModule,
+  Router,
+  ActivatedRoute,
+  NavigationEnd,
+} from "@angular/router";
 import { filter } from "rxjs/operators";
 import { Doctor } from "../../../models/user.model";
 import { AuthService } from "../../../services/auth.service";
@@ -27,11 +32,7 @@ interface HeaderConfig {
 @Component({
   selector: "app-doctor-dashboard",
   standalone: true,
-  imports: [
-    CommonModule,
-    RouterModule,
-    SidebarComponent,
-  ],
+  imports: [CommonModule, RouterModule, SidebarComponent],
   templateUrl: "./doctor-dashboard.component.html",
   styleUrls: ["./doctor-dashboard.component.css"],
 })
@@ -41,7 +42,7 @@ export class DoctorDashboardComponent implements OnInit, OnDestroy {
   // Navigation state
   isSidebarCollapsed = false;
   isMobileOpen = false;
-  activeSection = 'dashboard';
+  activeSection = "dashboard";
 
   // Statistics for header
   doctorStats = {
@@ -53,10 +54,10 @@ export class DoctorDashboardComponent implements OnInit, OnDestroy {
 
   // Header configuration based on active section
   headerConfig: HeaderConfig = {
-    title: 'Tableau de bord',
+    title: "Tableau de bord",
     showProfile: true,
     showStats: true,
-    actions: []
+    actions: [],
   };
 
   isLoading = false;
@@ -83,12 +84,12 @@ export class DoctorDashboardComponent implements OnInit, OnDestroy {
     });
 
     // S'abonner aux changements de route
-    this.routeSubscription = this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
-    ).subscribe(() => {
-      this.updateActiveSection();
-      this.updateHeaderConfig();
-    });
+    this.routeSubscription = this.router.events
+      .pipe(filter((event) => event instanceof NavigationEnd))
+      .subscribe(() => {
+        this.updateActiveSection();
+        this.updateHeaderConfig();
+      });
 
     // Initialiser la section active
     this.updateActiveSection();
@@ -107,126 +108,155 @@ export class DoctorDashboardComponent implements OnInit, OnDestroy {
   // Mettre à jour la section active en fonction de l'URL
   updateActiveSection() {
     const url = this.router.url;
-    
-    if (url.includes('/doctor/dashboard') || url === '/doctor' || url === '/doctor/') {
-      this.activeSection = 'dashboard';
-    } else if (url.includes('/doctor/appointments')) {
-      this.activeSection = 'appointments';
-    } else if (url.includes('/doctor/patients')) {
-      this.activeSection = 'patients';
-    } else if (url.includes('/doctor/my-schedule')) {
-      this.activeSection = 'schedule';
+
+    if (
+      url.includes("/doctor/dashboard") ||
+      url === "/doctor" ||
+      url === "/doctor/"
+    ) {
+      this.activeSection = "dashboard";
+    } else if (url.includes("/doctor/appointments")) {
+      this.activeSection = "appointments";
+    } else if (url.includes("/doctor/patients")) {
+      this.activeSection = "patients";
+    } else if (url.includes("/doctor/my-schedule")) {
+      this.activeSection = "schedule";
+    } else if (url.includes("/doctor/prescriptions")) {
+      this.activeSection = "prescriptions";
     } else {
-      this.activeSection = 'dashboard';
+      this.activeSection = "dashboard";
     }
   }
 
   // Mettre à jour la configuration du header selon la section
   updateHeaderConfig() {
     switch (this.activeSection) {
-      case 'dashboard':
+      case "dashboard":
         this.headerConfig = {
-          title: 'Tableau de bord',
+          title: "Tableau de bord",
           subtitle: `Dr. ${this.currentUser?.displayName}`,
           showProfile: true,
           showStats: true,
           actions: [
             {
-              label: 'Nouveau RDV',
-              icon: 'fas fa-plus',
+              label: "Nouveau RDV",
+              icon: "fas fa-plus",
               action: () => this.createNewAppointment(),
               primary: true,
-              disabled: this.isLoading
+              disabled: this.isLoading,
             },
             {
-              label: this.isLoading ? 'Actualisation...' : 'Actualiser',
-              icon: 'fas fa-sync-alt',
+              label: this.isLoading ? "Actualisation..." : "Actualiser",
+              icon: "fas fa-sync-alt",
               action: () => this.refreshData(),
-              disabled: this.isLoading
-            }
-          ]
+              disabled: this.isLoading,
+            },
+          ],
         };
         break;
 
-      case 'appointments':
+      case "appointments":
         this.headerConfig = {
-          title: 'Gestion des Rendez-vous',
-          subtitle: 'Planifiez et gérez vos consultations',
+          title: "Gestion des Rendez-vous",
+          subtitle: "Planifiez et gérez vos consultations",
           showProfile: false,
           showStats: false,
           actions: [
             {
-              label: 'Nouveau RDV',
-              icon: 'fas fa-calendar-plus',
+              label: "Nouveau RDV",
+              icon: "fas fa-calendar-plus",
               action: () => this.createNewAppointment(),
               primary: true,
-              disabled: this.isLoading
+              disabled: this.isLoading,
             },
             {
-              label: this.isLoading ? 'Actualisation...' : 'Actualiser',
-              icon: 'fas fa-sync-alt',
+              label: this.isLoading ? "Actualisation..." : "Actualiser",
+              icon: "fas fa-sync-alt",
               action: () => this.refreshData(),
-              disabled: this.isLoading
-            }
-          ]
+              disabled: this.isLoading,
+            },
+          ],
         };
         break;
 
-      case 'patients':
+      case "patients":
         this.headerConfig = {
-          title: 'Mes Patients',
-          subtitle: 'Gérez vos dossiers patients',
+          title: "Mes Patients",
+          subtitle: "Gérez vos dossiers patients",
           showProfile: false,
           showStats: false,
           actions: [
             {
-              label: 'Nouveau Patient',
-              icon: 'fas fa-user-plus',
+              label: "Nouveau Patient",
+              icon: "fas fa-user-plus",
               action: () => this.addNewPatient(),
               primary: true,
-              disabled: this.isLoading
+              disabled: this.isLoading,
             },
             {
-              label: this.isLoading ? 'Actualisation...' : 'Actualiser',
-              icon: 'fas fa-sync-alt',
+              label: this.isLoading ? "Actualisation..." : "Actualiser",
+              icon: "fas fa-sync-alt",
               action: () => this.refreshData(),
-              disabled: this.isLoading
-            }
-          ]
+              disabled: this.isLoading,
+            },
+          ],
         };
         break;
 
-      case 'schedule':
+      case "schedule":
         this.headerConfig = {
-          title: 'Mon Planning',
-          subtitle: 'Organisez votre emploi du temps',
+          title: "Mon Planning",
+          subtitle: "Organisez votre emploi du temps",
           showProfile: false,
           showStats: false,
           actions: [
             {
-              label: 'Nouvelle Disponibilité',
-              icon: 'fas fa-clock',
+              label: "Nouvelle Disponibilité",
+              icon: "fas fa-clock",
               action: () => this.addAvailability(),
               primary: true,
-              disabled: this.isLoading
+              disabled: this.isLoading,
             },
             {
-              label: this.isLoading ? 'Actualisation...' : 'Actualiser',
-              icon: 'fas fa-sync-alt',
+              label: this.isLoading ? "Actualisation..." : "Actualiser",
+              icon: "fas fa-sync-alt",
               action: () => this.refreshData(),
-              disabled: this.isLoading
-            }
-          ]
+              disabled: this.isLoading,
+            },
+          ],
+        };
+
+        break;
+      case "prescriptions":
+        this.headerConfig = {
+          title: "Gestion des Ordonnances",
+          subtitle: "Prescrivez et gérez les ordonnances de vos patients",
+          showProfile: false,
+          showStats: false,
+          actions: [
+            {
+              label: "Nouvelle ordonnance",
+              icon: "fas fa-plus",
+              action: () => this.createNewPrescription(),
+              primary: true,
+              disabled: this.isLoading,
+            },
+            {
+              label: this.isLoading ? "Actualisation..." : "Actualiser",
+              icon: "fas fa-sync-alt",
+              action: () => this.refreshData(),
+              disabled: this.isLoading,
+            },
+          ],
         };
         break;
-
       default:
         this.headerConfig = {
-          title: 'Tableau de bord',
+          title: "Tableau de bord",
           subtitle: `Dr. ${this.currentUser?.displayName}`,
           showProfile: true,
           showStats: true,
-          actions: []
+          actions: [],
         };
     }
   }
@@ -251,18 +281,22 @@ export class DoctorDashboardComponent implements OnInit, OnDestroy {
     this.isMobileOpen = !this.isMobileOpen;
   }
 
+  async createNewPrescription() {
+    this.router.navigate(["/doctor", "prescriptions", "create"]);
+  }
   // Navigation quand on clique sur un élément du sidebar
   onSectionChange(section: string) {
     const routeMap: Record<string, string[]> = {
-      'dashboard': ['/doctor', 'dashboard'],
-      'appointments': ['/doctor', 'appointments'],
-      'patients': ['/doctor', 'patients'],
-      'schedule': ['/doctor', 'my-schedule']
+      dashboard: ["/doctor", "dashboard"],
+      appointments: ["/doctor", "appointments"],
+      patients: ["/doctor", "patients"],
+      schedule: ["/doctor", "my-schedule"],
+      prescriptions: ["/doctor", "prescriptions", "manage"], // <-- Ajouté
     };
 
-    const route = routeMap[section] || ['/doctor', 'dashboard'];
+    const route = routeMap[section] || ["/doctor", "dashboard"];
     this.router.navigate(route);
-    
+
     // Fermer le sidebar mobile après navigation
     if (window.innerWidth <= 768) {
       this.isMobileOpen = false;
@@ -338,7 +372,7 @@ export class DoctorDashboardComponent implements OnInit, OnDestroy {
   // Actions du header
   async createNewAppointment() {
     // Implémentez la logique pour créer un nouveau rendez-vous
-    console.log('Créer un nouveau rendez-vous');
+    console.log("Créer un nouveau rendez-vous");
   }
 
   async refreshData() {
@@ -347,11 +381,11 @@ export class DoctorDashboardComponent implements OnInit, OnDestroy {
 
   addNewPatient() {
     // Implémentez la logique pour ajouter un nouveau patient
-    console.log('Ajouter un nouveau patient');
+    console.log("Ajouter un nouveau patient");
   }
 
   addAvailability() {
     // Implémentez la logique pour ajouter une disponibilité
-    console.log('Ajouter une disponibilité');
+    console.log("Ajouter une disponibilité");
   }
 }

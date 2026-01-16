@@ -1,0 +1,403 @@
+<div class="prescription-templates">
+  <!-- En-tête -->
+  <div class="templates-header">
+    <div class="header-content">
+      <h2><i class="fas fa-file-medical-alt"></i> Mes Templates d'Ordonnances</h2>
+      <p>Créez et gérez vos templates pour prescrire plus rapidement</p>
+    </div>
+    
+    <div class="header-actions">
+      <button class="btn-primary" (click)="showCreateTemplate = true" [disabled]="isLoading">
+        <i class="fas fa-plus"></i> Nouveau template
+      </button>
+      <button class="btn-secondary" (click)="loadTemplates()" [disabled]="isLoading">
+        <i class="fas fa-sync-alt" [class.fa-spin]="isLoading"></i>
+        Actualiser
+      </button>
+    </div>
+  </div>
+
+  <!-- Statistiques -->
+  <div class="templates-stats" *ngIf="templates.length > 0">
+    <div class="stat-card">
+      <div class="stat-icon">
+        <i class="fas fa-file-medical"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ getTemplateCount() }}</h3>
+        <p>Templates</p>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">
+        <i class="fas fa-pills"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ getMedicationCount() }}</h3>
+        <p>Médicaments total</p>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">
+        <i class="fas fa-tags"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ getCategoryCount() }}</h3>
+        <p>Catégories</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Création de template -->
+  <div class="create-template-section" *ngIf="showCreateTemplate">
+    <div class="template-form">
+      <h3><i class="fas fa-plus-circle"></i> Créer un nouveau template</h3>
+      
+      <form [formGroup]="templateForm" (ngSubmit)="createTemplate()">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="templateName">Nom du template *</label>
+            <input 
+              type="text" 
+              id="templateName" 
+              formControlName="name" 
+              class="form-input" 
+              placeholder="Ex: Antibiotique standard"
+              [class.invalid]="templateForm.get('name')?.invalid && templateForm.get('name')?.touched"
+            />
+            <div class="error-message" *ngIf="templateForm.get('name')?.invalid && templateForm.get('name')?.touched">
+              Le nom du template est requis (minimum 3 caractères)
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="templateCategory">Catégorie</label>
+            <input 
+              type="text" 
+              id="templateCategory" 
+              formControlName="category" 
+              class="form-input" 
+              placeholder="Ex: Antibiotiques"
+            />
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="templateDescription">Description (optionnel)</label>
+          <textarea 
+            id="templateDescription" 
+            formControlName="description" 
+            class="form-textarea" 
+            rows="2"
+            placeholder="Description du template..."
+          ></textarea>
+        </div>
+        
+        <!-- Médicaments du template -->
+        <div class="template-medications">
+          <div class="medications-header">
+            <h4>Médicaments du template</h4>
+            <button type="button" class="btn-add" (click)="addMedication()">
+              <i class="fas fa-plus"></i> Ajouter un médicament
+            </button>
+          </div>
+          
+          <div class="medications-list">
+            <div 
+              formArrayName="medications"
+              *ngFor="let medication of getMedicationsControls(); let i = index; trackBy: trackByFn"
+            >
+              <div [formGroupName]="i" class="medication-card">
+                <div class="medication-header">
+                  <div class="medication-number">{{ i + 1 }}</div>
+                  <button 
+                    type="button" 
+                    class="btn-remove"
+                    (click)="removeMedication(i)"
+                    aria-label="Supprimer"
+                  >
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+                
+                <div class="medication-fields">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label>Nom du médicament *</label>
+                      <input 
+                        type="text" 
+                        formControlName="name" 
+                        class="form-input" 
+                        placeholder="Paracétamol"
+                        [class.invalid]="medication.get('name')?.invalid && medication.get('name')?.touched"
+                      />
+                    </div>
+                    
+                    <div class="form-group">
+                      <label>Dosage *</label>
+                      <input 
+                        type="text" 
+                        formControlName="dosage" 
+                        class="form-input" 
+                        placeholder="500mg"
+                        [class.invalid]="medication.get('dosage')?.invalid && medication.get('dosage')?.touched"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label>Fréquence *</label>
+                      <select 
+                        formControlName="frequency" 
+                        class="form-select"
+                        [class.invalid]="medication.get('frequency')?.invalid && medication.get('frequency')?.touched"
+                      >
+                        <option value="">Sélectionner</option>
+                        <option *ngFor="let freq of frequencyOptions" [value]="freq">
+                          {{ freq }}
+                        </option>
+                      </select>
+                    </div>
+                    
+                    <div class="form-group">
+                      <label>Durée *</label>
+                      <input 
+                        type="text" 
+                        formControlName="duration" 
+                        class="form-input" 
+                        placeholder="7 jours"
+                        [class.invalid]="medication.get('duration')?.invalid && medication.get('duration')?.touched"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label>Quantité *</label>
+                      <div class="quantity-input">
+                        <input 
+                          type="number" 
+                          formControlName="quantity" 
+                          class="form-input" 
+                          min="1"
+                          [class.invalid]="medication.get('quantity')?.invalid && medication.get('quantity')?.touched"
+                        />
+                        <select 
+                          formControlName="unit" 
+                          class="form-select"
+                        >
+                          <option *ngFor="let unit of unitOptions" [value]="unit">
+                            {{ unit }}
+                          </option>
+                        </select>
+                      </div>
+                    </div>
+                    
+                    <div class="form-group">
+                      <label>Voie d'administration *</label>
+                      <select 
+                        formControlName="route" 
+                        class="form-select"
+                        [class.invalid]="medication.get('route')?.invalid && medication.get('route')?.touched"
+                      >
+                        <option value="">Sélectionner</option>
+                        <option *ngFor="let route of routeOptions" [value]="route">
+                          {{ route }}
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label>Notes supplémentaires (optionnel)</label>
+                    <textarea 
+                      formControlName="notes" 
+                      class="form-textarea" 
+                      rows="2"
+                      placeholder="Précautions particulières, interactions..."
+                    ></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="no-medications" *ngIf="templateMedications.length === 0">
+            <i class="fas fa-pills"></i>
+            <p>Aucun médicament ajouté au template</p>
+            <button type="button" class="btn-add-large" (click)="addMedication()">
+              <i class="fas fa-plus-circle"></i> Ajouter le premier médicament
+            </button>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="templateInstructions">Instructions par défaut *</label>
+          <textarea 
+            id="templateInstructions" 
+            formControlName="instructions" 
+            class="form-textarea" 
+            rows="4"
+            placeholder="Instructions médicales par défaut..."
+            [class.invalid]="templateForm.get('instructions')?.invalid && templateForm.get('instructions')?.touched"
+          ></textarea>
+          <div class="error-message" *ngIf="templateForm.get('instructions')?.invalid && templateForm.get('instructions')?.touched">
+            Les instructions sont requises (minimum 10 caractères)
+          </div>
+          <small class="form-hint">
+            Ces instructions seront automatiquement ajoutées aux ordonnances créées avec ce template
+          </small>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="cancelCreateTemplate()" [disabled]="isCreating">
+            <i class="fas fa-times"></i> Annuler
+          </button>
+          <button type="submit" class="btn-primary" [disabled]="templateForm.invalid || isCreating">
+            <i class="fas fa-save"></i>
+            {{ isCreating ? 'Création...' : 'Créer le template' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="filters-section" *ngIf="templates.length > 0">
+    <div class="filters-header">
+      <h3>Filtrer les templates</h3>
+      <button class="btn-clear-filters" (click)="clearFilters()" *ngIf="categoryFilter !== 'all' || searchTerm">
+        <i class="fas fa-times"></i> Effacer les filtres
+      </button>
+    </div>
+    
+    <div class="filters-grid">
+      <div class="filter-group">
+        <label><i class="fas fa-search"></i> Rechercher</label>
+        <div class="search-input-wrapper">
+          <input 
+            type="text" 
+            [(ngModel)]="searchTerm" 
+            (input)="filterTemplates()"
+            placeholder="Nom, description, médicament..."
+            class="search-input"
+          />
+        </div>
+      </div>
+      
+      <div class="filter-group">
+        <label><i class="fas fa-tag"></i> Catégorie</label>
+        <select [(ngModel)]="categoryFilter" (change)="filterTemplates()" class="form-select">
+          <option value="all">Toutes les catégories</option>
+          <option *ngFor="let category of getCategories()" [value]="category">
+            {{ category }}
+          </option>
+          <option value="uncategorized">Non catégorisé</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chargement -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="loading-spinner"></div>
+    <p>Chargement de vos templates...</p>
+  </div>
+
+  <!-- État vide -->
+  <div *ngIf="!isLoading && templates.length === 0" class="empty-state">
+    <div class="empty-content">
+      <div class="empty-icon">
+        <i class="fas fa-file-medical-alt"></i>
+      </div>
+      <h3>Aucun template</h3>
+      <p>Créez votre premier template pour prescrire plus rapidement.</p>
+      <button class="btn-primary" (click)="showCreateTemplate = true">
+        <i class="fas fa-plus"></i> Créer un template
+      </button>
+    </div>
+  </div>
+
+  <!-- État filtré vide -->
+  <div *ngIf="!isLoading && templates.length > 0 && filteredTemplates.length === 0" class="empty-state">
+    <div class="empty-content">
+      <div class="empty-icon">
+        <i class="fas fa-search"></i>
+      </div>
+      <h3>Aucun template trouvé</h3>
+      <p>Aucun template ne correspond à vos critères de recherche.</p>
+      <button class="btn-primary" (click)="clearFilters()">
+        <i class="fas fa-times"></i> Effacer les filtres
+      </button>
+    </div>
+  </div>
+
+  <!-- Liste des templates -->
+  <div class="templates-list" *ngIf="!isLoading && filteredTemplates.length > 0">
+    <div class="templates-grid">
+      <div *ngFor="let template of filteredTemplates" class="template-card">
+        <div class="template-header">
+          <div class="template-icon">
+            <i class="fas fa-file-medical"></i>
+          </div>
+          <div class="template-info">
+            <h4>{{ template.name }}</h4>
+            <p class="template-category" *ngIf="template.category">
+              <i class="fas fa-tag"></i> {{ template.category }}
+            </p>
+            <p class="template-description" *ngIf="template.description">
+              {{ template.description }}
+            </p>
+          </div>
+        </div>
+        
+        <div class="template-body">
+          <div class="template-medications-info">
+            <div class="medications-count">
+              <i class="fas fa-pills"></i>
+              <span>{{ template.medications.length }} médicament(s)</span>
+            </div>
+            <div class="last-used" *ngIf="template.lastUsed">
+              <i class="fas fa-clock"></i>
+              Utilisé le {{ formatDate(template.lastUsed) }}
+            </div>
+          </div>
+          
+          <div class="template-instructions">
+            <strong>Instructions:</strong>
+            <p class="truncated-text">{{ template.instructions | slice:0:100 }}{{ template.instructions.length > 100 ? '...' : '' }}</p>
+          </div>
+          
+          <div class="template-meta">
+            <div class="medications-preview">
+              <strong>Médicaments:</strong>
+              <span>{{ getMedicationSummary(template.medications) }}</span>
+            </div>
+            <div class="created-date">
+              <i class="fas fa-calendar"></i>
+              Créé le {{ formatDate(template.createdAt) }}
+            </div>
+          </div>
+        </div>
+        
+        <div class="template-actions">
+          <button class="btn-action use" (click)="useTemplate(template)" title="Utiliser ce template">
+            <i class="fas fa-play"></i> Utiliser
+          </button>
+          <button class="btn-action edit" (click)="editTemplate(template)" title="Modifier">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="btn-action duplicate" (click)="duplicateTemplate(template)" title="Dupliquer">
+            <i class="fas fa-copy"></i>
+          </button>
+          <button class="btn-action delete" (click)="deleteTemplate(template.id)" title="Supprimer">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

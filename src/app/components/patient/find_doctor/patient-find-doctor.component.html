@@ -1,0 +1,296 @@
+<div class="find-doctor-container">
+  <!-- En-tête -->
+  <div class="section-header">
+    <div class="header-content">
+      <h2><i class="fas fa-search"></i> Trouver un médecin</h2>
+      <p>Recherchez et prenez rendez-vous avec des médecins près de chez vous</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary" (click)="toggleFilters()">
+        <i class="fas fa-filter"></i>
+        {{ showFilters ? 'Masquer filtres' : 'Filtres avancés' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Barre de recherche -->
+  <div class="search-bar">
+    <div class="search-input-container">
+      <i class="fas fa-search"></i>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="onSearchChange()"
+        placeholder="Rechercher un médecin par nom, spécialité..."
+        class="search-input"
+      />
+      <button class="btn-secondary btn-small" (click)="filterDoctors()">
+        Rechercher
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtres avancés -->
+  <div class="advanced-filters" *ngIf="showFilters">
+    <div class="filters-grid">
+      <div class="filter-group">
+        <label>Spécialité</label>
+        <select [(ngModel)]="selectedSpeciality" (change)="filterDoctors()">
+          <option value="all">Toutes les spécialités</option>
+          <option *ngFor="let spec of specialities" [value]="spec">
+            {{ spec }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Disponibilité</label>
+        <select [(ngModel)]="availabilityFilter" (change)="filterDoctors()">
+          <option value="all">Tous disponibles</option>
+          <option value="today">Aujourd'hui</option>
+          <option value="thisWeek">Cette semaine</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Note minimum</label>
+        <div class="rating-filter">
+          <span class="stars">
+            <i *ngFor="let star of getDoctorStars(minRating)" 
+               class="fas fa-star" 
+               [class.filled]="star === 1"
+               [class.half]="star === 0.5"></i>
+          </span>
+          <input type="range" min="0" max="5" step="0.5" 
+                 [(ngModel)]="minRating" 
+                 (change)="filterDoctors()"
+                 class="rating-slider">
+          <span class="rating-value">{{ minRating }}/5</span>
+        </div>
+      </div>
+
+      <div class="filter-group" *ngIf="userLocation">
+        <label>Distance max (km)</label>
+        <input type="range" min="1" max="100" 
+               [(ngModel)]="maxDistance" 
+               (change)="filterDoctors()"
+               class="distance-slider">
+        <span class="distance-value">{{ maxDistance }} km</span>
+      </div>
+
+      <div class="filter-group">
+        <label>Trier par</label>
+        <select [(ngModel)]="sortBy" (change)="filterDoctors()">
+          <option value="name">Nom</option>
+          <option value="rating">Note</option>
+          <option value="experience">Expérience</option>
+          <option value="distance" *ngIf="userLocation">Distance</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="filter-actions">
+      <button class="btn-secondary" (click)="clearFilters()">
+        <i class="fas fa-times"></i> Réinitialiser
+      </button>
+    </div>
+  </div>
+
+  <!-- Statistiques -->
+  <div class="search-stats">
+    <div class="stat-item">
+      <i class="fas fa-user-md"></i>
+      <span>{{ filteredDoctors.length }} médecins trouvés</span>
+    </div>
+    <div class="stat-item" *ngIf="userLocation">
+      <i class="fas fa-location-dot"></i>
+      <span>Géolocalisation activée</span>
+    </div>
+    <div class="stat-item" *ngIf="selectedSpeciality !== 'all'">
+      <i class="fas fa-stethoscope"></i>
+      <span>Spécialité: {{ selectedSpeciality }}</span>
+    </div>
+  </div>
+
+  <!-- Liste des médecins -->
+  <div class="doctors-container">
+    <div *ngIf="isLoading" class="loading-state">
+      <div class="spinner"></div>
+      <p>Recherche des médecins...</p>
+    </div>
+
+    <div *ngIf="!isLoading && filteredDoctors.length === 0" class="no-results">
+      <div class="empty-state">
+        <i class="fas fa-search"></i>
+        <h4>Aucun médecin trouvé</h4>
+        <p>Aucun médecin ne correspond à vos critères de recherche</p>
+        <button class="btn-primary" (click)="clearFilters()">
+          Voir tous les médecins
+        </button>
+      </div>
+    </div>
+
+    <div class="doctors-grid">
+      <div *ngFor="let doctor of filteredDoctors" class="doctor-card">
+        <div class="doctor-card-header">
+          <div class="doctor-avatar">
+            {{ getInitials(doctor.displayName) }}
+          </div>
+          <div class="doctor-card-info">
+            <h4>Dr. {{ doctor.displayName }}</h4>
+            <p class="speciality">{{ doctor.speciality }}</p>
+            <div class="doctor-rating">
+              <div class="stars">
+                <i *ngFor="let star of getDoctorStars(doctor.rating || 0)" 
+                   class="fas fa-star" 
+                   [class.filled]="star === 1"
+                   [class.half]="star === 0.5"></i>
+              </div>
+              <span class="rating-number">{{ (doctor.rating || 0).toFixed(1) }}</span>
+              <span class="reviews">({{ doctor.experienceYears || 0 }} ans exp.)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="doctor-card-body">
+          <div class="doctor-detail">
+            <i class="fas fa-graduation-cap"></i>
+            <span>Expérience: {{ doctor.experienceYears || 5 }} ans</span>
+          </div>
+          
+          <div class="doctor-detail" *ngIf="doctor.address">
+            <i class="fas fa-location-dot"></i>
+            <span>{{ doctor.address | slice:0:50 }}{{ doctor.address.length > 50 ? '...' : '' }}</span>
+          </div>
+
+          <div class="doctor-detail">
+            <i class="fas fa-phone"></i>
+            <span>{{ doctor.phone || 'Tél: non renseigné' }}</span>
+          </div>
+
+          <div class="doctor-distance" *ngIf="userLocation">
+            <i class="fas fa-route"></i>
+            <span>{{ calculateDistance(doctor) || '?' }} km de vous</span>
+          </div>
+        </div>
+
+        <div class="doctor-card-actions">
+          <button class="btn-secondary btn-small" (click)="viewDoctorDetails(doctor)">
+            <i class="fas fa-eye"></i> Voir profil
+          </button>
+          <button class="btn-primary btn-small" (click)="bookAppointment(doctor)">
+            <i class="fas fa-calendar-plus"></i> Prendre RDV
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal détails médecin -->
+  <div class="modal-backdrop" *ngIf="showDoctorDetails" (click)="closeDoctorDetails()"></div>
+
+  <div class="modal doctor-details-modal" *ngIf="showDoctorDetails && selectedDoctor">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="fas fa-user-md"></i> Profil du médecin</h3>
+        <button class="btn-close" (click)="closeDoctorDetails()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="doctor-profile-header">
+          <div class="profile-avatar">
+            {{ getInitials(selectedDoctor.displayName) }}
+          </div>
+          <div class="profile-info">
+            <h2>Dr. {{ selectedDoctor.displayName }}</h2>
+            <p class="speciality">{{ selectedDoctor.speciality }}</p>
+            <div class="profile-rating">
+              <div class="stars">
+                <i *ngFor="let star of getDoctorStars(selectedDoctor.rating || 0)" 
+                   class="fas fa-star" 
+                   [class.filled]="star === 1"
+                   [class.half]="star === 0.5"></i>
+              </div>
+              <span>{{ (selectedDoctor.rating || 0).toFixed(1) }}/5</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="details-section">
+          <h4><i class="fas fa-info-circle"></i> Informations</h4>
+          <div class="details-grid">
+            <div class="detail-item">
+              <strong>Expérience:</strong>
+              <span>{{ selectedDoctor.experienceYears || 5 }} ans</span>
+            </div>
+            <div class="detail-item">
+              <strong>Langues parlées:</strong>
+              <span>Français, Anglais</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedDoctor.address">
+              <strong>Adresse:</strong>
+              <span>{{ selectedDoctor.address }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedDoctor.phone">
+              <strong>Téléphone:</strong>
+              <span>{{ selectedDoctor.phone }}</span>
+            </div>
+            <div class="detail-item" *ngIf="userLocation">
+              <strong>Distance:</strong>
+              <span>{{ calculateDistance(selectedDoctor) || '?' }} km</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="details-section">
+          <h4><i class="fas fa-clock"></i> Horaires</h4>
+          <div class="schedule-grid">
+            <div class="schedule-day">
+              <span>Lundi - Vendredi</span>
+              <span>08:30 - 18:30</span>
+            </div>
+            <div class="schedule-day">
+              <span>Samedi</span>
+              <span>09:00 - 13:00</span>
+            </div>
+            <div class="schedule-day">
+              <span>Dimanche</span>
+              <span>Fermé</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="details-section">
+          <h4><i class="fas fa-comments"></i> Avis patients</h4>
+          <div class="reviews-list">
+            <div class="review-item">
+              <div class="review-header">
+                <strong>Marie D.</strong>
+                <div class="review-stars">
+                  <i class="fas fa-star filled"></i>
+                  <i class="fas fa-star filled"></i>
+                  <i class="fas fa-star filled"></i>
+                  <i class="fas fa-star filled"></i>
+                  <i class="fas fa-star"></i>
+                </div>
+              </div>
+              <p class="review-text">"Très professionnel, à l'écoute et efficace."</p>
+              <small class="review-date">Il y a 2 semaines</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-secondary" (click)="closeDoctorDetails()">
+          Fermer
+        </button>
+        <button class="btn-primary" (click)="bookAppointment(selectedDoctor)">
+          <i class="fas fa-calendar-plus"></i> Prendre rendez-vous
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

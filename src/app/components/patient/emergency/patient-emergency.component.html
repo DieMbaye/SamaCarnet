@@ -1,0 +1,124 @@
+<div class="emergency-container">
+  <div class="emergency-header">
+    <h1><i class="fas fa-exclamation-triangle"></i> Urgences médicales</h1>
+    <p class="subtitle">En cas d'urgence, restez calme et suivez les instructions</p>
+  </div>
+
+  <div class="emergency-alert">
+    <div class="alert-content">
+      <i class="fas fa-heartbeat"></i>
+      <div>
+        <h3>Signes d'urgence</h3>
+        <p>Douleur thoracique, difficulté respiratoire, perte de conscience, saignement abondant, traumatisme grave</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Numéros d'urgence -->
+  <div class="emergency-numbers-section">
+    <h2><i class="fas fa-phone-alt"></i> Numéros d'urgence</h2>
+    <div class="numbers-grid">
+      <div *ngFor="let number of emergencyNumbers" class="number-card" (click)="callEmergency(number.number)">
+        <div class="number-header">
+          <h3>{{ number.name }}</h3>
+          <span class="emergency-badge">Urgent</span>
+        </div>
+        <div class="number-display">
+          <i class="fas fa-phone"></i>
+          <span class="phone-number">{{ number.number }}</span>
+        </div>
+        <p class="number-description">{{ number.description }}</p>
+        <button class="btn-call">
+          <i class="fas fa-phone"></i> Appeler
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hôpitaux proches -->
+  <div class="hospitals-section">
+    <h2><i class="fas fa-hospital"></i> Hôpitaux à proximité</h2>
+    <div class="hospitals-list">
+      <div *ngFor="let hospital of nearbyHospitals" class="hospital-card">
+        <div class="hospital-info">
+          <h4>{{ hospital.name }}</h4>
+          <p><i class="fas fa-map-marker-alt"></i> {{ hospital.distance }}</p>
+          <p><i class="fas fa-phone"></i> {{ hospital.phone }}</p>
+        </div>
+        <button class="btn-secondary" (click)="callEmergency(hospital.phone)">
+          <i class="fas fa-phone"></i> Appeler
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions rapides -->
+  <div class="quick-actions-section">
+    <h2><i class="fas fa-bolt"></i> Actions rapides</h2>
+    <div class="actions-grid">
+      <button class="action-btn" (click)="getLocation()">
+        <i class="fas fa-location-dot"></i>
+        <span>Partager ma position</span>
+      </button>
+      <button class="action-btn" (click)="shareLocation()">
+        <i class="fas fa-share"></i>
+        <span>Envoyer position SMS</span>
+      </button>
+      <button class="action-btn" routerLink="/patient/medical-records">
+        <i class="fas fa-file-medical"></i>
+        <span>Dossier médical</span>
+      </button>
+      <button class="action-btn" routerLink="/patient/prescriptions">
+        <i class="fas fa-prescription"></i>
+        <span>Ordonnances</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Conseils -->
+  <div class="advice-section">
+    <h2><i class="fas fa-lightbulb"></i> Que faire en attendant les secours</h2>
+    <div class="advice-list">
+      <div class="advice-item">
+        <i class="fas fa-check-circle"></i>
+        <p>Restez calme et rassurez la victime</p>
+      </div>
+      <div class="advice-item">
+        <i class="fas fa-check-circle"></i>
+        <p>Ne déplacez pas la victime si traumatisme</p>
+      </div>
+      <div class="advice-item">
+        <i class="fas fa-check-circle"></i>
+        <p>Libérez les voies respiratoires</p>
+      </div>
+      <div class="advice-item">
+        <i class="fas fa-check-circle"></i>
+        <p>Arrêtez les saignements par compression</p>
+      </div>
+      <div class="advice-item">
+        <i class="fas fa-check-circle"></i>
+        <p>Couchez la victime en position latérale de sécurité</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contacts d'urgence personnels -->
+  <div class="personal-contacts">
+    <h2><i class="fas fa-user-friends"></i> Contacts d'urgence</h2>
+    <div class="contacts-list">
+      <div class="contact-item">
+        <i class="fas fa-user"></i>
+        <div>
+          <strong>Docteur traitant</strong>
+          <p>Dr. Martin Dupont - 01 23 45 67 89</p>
+        </div>
+        <button class="btn-small" (click)="callEmergency('0123456789')">
+          <i class="fas fa-phone"></i>
+        </button>
+      </div>
+    </div>
+    <button class="btn-primary">
+      <i class="fas fa-plus"></i> Ajouter un contact
+    </button>
+  </div>
+</div>

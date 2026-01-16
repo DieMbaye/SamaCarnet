@@ -1,0 +1,411 @@
+<div class="prescription-creator">
+  <!-- En-tête -->
+  <div class="creator-header">
+    <div class="header-content">
+      <h2><i class="fas fa-prescription"></i> Nouvelle Ordonnance</h2>
+      <p *ngIf="patient">Pour {{ patient.displayName }}</p>
+      <p *ngIf="appointment">
+        Suite à la consultation du {{ appointment.date | date : "dd/MM/yyyy" }}
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <button
+        class="btn-secondary"
+        (click)="downloadPrescriptionPreview()"
+        [disabled]="isSubmitting"
+      >
+        <i class="fas fa-download"></i> Aperçu
+      </button>
+      <button
+        class="btn-secondary"
+        (click)="resetForm()"
+        [disabled]="isSubmitting"
+      >
+        <i class="fas fa-redo"></i> Réinitialiser
+      </button>
+    </div>
+  </div>
+
+  <!-- Formulaire principal -->
+  <form
+    [formGroup]="prescriptionForm"
+    (ngSubmit)="submitPrescription()"
+    class="prescription-form"
+  >
+    <!-- Informations de base -->
+    <div class="form-section">
+      <h3><i class="fas fa-info-circle"></i> Informations générales</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="date">Date de prescription *</label>
+          <input
+            type="date"
+            id="date"
+            formControlName="date"
+            class="form-input"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="expiryDate">Date d'expiration *</label>
+          <input
+            type="date"
+            id="expiryDate"
+            formControlName="expiryDate"
+            class="form-input"
+          />
+          <small class="form-hint"
+            >L'ordonnance sera valide jusqu'à cette date</small
+          >
+        </div>
+      </div>
+    </div>
+
+    <!-- Recherche de médicaments -->
+    <div class="form-section">
+      <h3><i class="fas fa-pills"></i> Médicaments prescrits</h3>
+
+      <!-- Barre de recherche -->
+      <div class="search-section">
+        <div class="search-input-group">
+          <i class="fas fa-search search-icon"></i>
+          <input
+            type="text"
+            placeholder="Rechercher un médicament..."
+            class="search-input"
+            (input)="searchMedications($any($event.target).value)"
+          />
+          <button
+            type="button"
+            class="btn-small"
+            (click)="addEmptyMedication()"
+          >
+            <i class="fas fa-plus"></i> Ajouter manuellement
+          </button>
+        </div>
+
+        <!-- Résultats de recherche -->
+        <div
+          class="search-results"
+          *ngIf="showMedicationSearch && searchResults.length > 0"
+        >
+          <div class="results-header">
+            <h4>Médicaments trouvés</h4>
+            <button
+              type="button"
+              class="btn-close-results"
+              (click)="showMedicationSearch = false"
+            >
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="medications-list">
+            <div
+              *ngFor="let med of searchResults"
+              class="medication-item"
+              (click)="selectMedication(med)"
+            >
+              <div class="medication-icon">
+                <i class="fas fa-pills"></i>
+              </div>
+              <div class="medication-info">
+                <strong>{{ med.name }}</strong>
+                <span class="generic-name">{{ med.genericName }}</span>
+                <small>{{ med.category }} • {{ med.defaultDosage }}</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Templates -->
+      <div class="templates-section" *ngIf="templates.length > 0">
+        <h4>Utiliser un template</h4>
+        <div class="templates-grid">
+          <div
+            *ngFor="let template of templates"
+            class="template-card"
+            [class.selected]="selectedTemplate?.id === template.id"
+            (click)="useTemplate(template)"
+          >
+            <div class="template-icon">
+              <i class="fas fa-file-medical"></i>
+            </div>
+            <div class="template-info">
+              <strong>{{ template.name }}</strong>
+              <p>{{ template.description || "Aucune description" }}</p>
+              <small>{{ template.medications.length }} médicament(s)</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Liste des médicaments ajoutés -->
+      <div class="medications-section" *ngIf="showMedicationForm">
+        <div class="medications-header">
+          <h4>Médicaments ajoutés ({{ medications.length }})</h4>
+          <small>Cliquez sur un médicament pour le modifier</small>
+        </div>
+
+        <div class="medications-list-container">
+          <div formArrayName="medications">
+            <div
+              *ngFor="
+                let medication of getMedicationsControls();
+                let i = index;
+                trackBy: trackByFn
+              "
+              [formGroupName]="i"
+              class="medication-card"
+            >
+              <div class="medication-header">
+                <div class="medication-title">
+                  <i class="fas fa-prescription-bottle-alt"></i>
+                  <h5>
+                    {{ medication.get("name")?.value || "Nouveau médicament" }}
+                  </h5>
+                </div>
+                <button
+                  type="button"
+                  class="btn-remove-medication"
+                  (click)="removeMedication(i)"
+                  aria-label="Supprimer"
+                >
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+
+              <div class="medication-details">
+                <div class="detail-row">
+                  <div class="form-group small">
+                    <label>Nom du médicament *</label>
+                    <input
+                      type="text"
+                      formControlName="name"
+                      class="form-input"
+                      placeholder="Ex: Paracétamol"
+                    />
+                  </div>
+
+                  <div class="form-group small">
+                    <label>Dosage *</label>
+                    <input
+                      type="text"
+                      formControlName="dosage"
+                      class="form-input"
+                      placeholder="Ex: 500mg"
+                    />
+                  </div>
+                </div>
+
+                <div class="detail-row">
+                  <div class="form-group small">
+                    <label>Fréquence *</label>
+                    <select formControlName="frequency" class="form-select">
+                      <option value="">Sélectionner</option>
+                      <option
+                        *ngFor="let freq of frequencyOptions"
+                        [value]="freq"
+                      >
+                        {{ freq }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <div class="form-group small">
+                    <label>Durée *</label>
+                    <select formControlName="duration" class="form-select">
+                      <option value="">Sélectionner</option>
+                      <option
+                        *ngFor="let duration of durationOptions"
+                        [value]="duration"
+                      >
+                        {{ duration }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="detail-row">
+                  <div class="form-group small">
+                    <label>Quantité *</label>
+                    <div class="quantity-input">
+                      <input
+                        type="number"
+                        formControlName="quantity"
+                        class="form-input"
+                        min="1"
+                      />
+                      <select formControlName="unit" class="form-select">
+                        <option *ngFor="let unit of unitOptions" [value]="unit">
+                          {{ unit }}
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="form-group small">
+                    <label>Voie d'administration *</label>
+                    <select formControlName="route" class="form-select">
+                      <option value="">Sélectionner</option>
+                      <option
+                        *ngFor="let route of routeOptions"
+                        [value]="route"
+                      >
+                        {{ route }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label>Notes supplémentaires (optionnel)</label>
+                  <textarea
+                    formControlName="notes"
+                    class="form-textarea"
+                    rows="2"
+                    placeholder="Précautions particulières, interactions, etc."
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="add-another-section">
+          <button
+            type="button"
+            class="btn-outline"
+            (click)="addEmptyMedication()"
+          >
+            <i class="fas fa-plus-circle"></i> Ajouter un autre médicament
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="form-section">
+      <h3><i class="fas fa-file-medical-alt"></i> Instructions médicales</h3>
+      <div class="form-group">
+        <label for="instructions">Instructions pour le patient *</label>
+        <textarea
+          id="instructions"
+          formControlName="instructions"
+          class="form-textarea"
+          rows="4"
+          placeholder="Instructions détaillées pour la prise des médicaments, précautions, etc."
+        ></textarea>
+        <small class="form-hint">
+          Ces instructions seront imprimées sur l'ordonnance et expliquées au
+          patient
+        </small>
+      </div>
+    </div>
+
+    <!-- Notes additionnelles -->
+    <div class="form-section">
+      <h3><i class="fas fa-sticky-note"></i> Notes additionnelles</h3>
+      <div class="form-group">
+        <label for="notes">Notes internes (optionnel)</label>
+        <textarea
+          id="notes"
+          formControlName="notes"
+          class="form-textarea"
+          rows="3"
+          placeholder="Notes pour le dossier médical, informations complémentaires..."
+        ></textarea>
+      </div>
+    </div>
+
+    <!-- Actions du formulaire -->
+    <div class="form-actions">
+      <button
+        type="button"
+        class="btn-secondary"
+        (click)="resetForm()"
+        [disabled]="isSubmitting"
+      >
+        <i class="fas fa-times"></i> Annuler
+      </button>
+      <button
+        type="submit"
+        class="btn-primary"
+        [disabled]="
+          prescriptionForm.invalid || medications.length === 0 || isSubmitting
+        "
+      >
+        <i class="fas fa-save"></i>
+        {{ isSubmitting ? "Création en cours..." : "Créer l'ordonnance" }}
+      </button>
+    </div>
+  </form>
+
+  <!-- Aperçu rapide -->
+  <div class="preview-section" *ngIf="medications.length > 0">
+    <h3><i class="fas fa-eye"></i> Aperçu de l'ordonnance</h3>
+    <div class="preview-card">
+      <div class="preview-header">
+        <div class="preview-logo">
+          <i class="fas fa-heartbeat"></i>
+          <span>ORDONNANCE MÉDICALE</span>
+        </div>
+        <div class="preview-date">
+          Date: {{ prescriptionForm.get("date")?.value || "--/--/----" }}
+        </div>
+      </div>
+
+      <div class="preview-body">
+        <div class="preview-patient">
+          <strong>Patient:</strong> {{ patient?.displayName || "Non spécifié" }}
+        </div>
+
+        <div class="preview-medications">
+          <strong>Médicaments prescrits:</strong>
+          <ul>
+            <li
+              *ngFor="
+                let med of prescriptionForm.get('medications')?.value;
+                let i = index
+              "
+            >
+              {{ i + 1 }}. {{ med.name }} {{ med.dosage }} - {{ med.quantity }}
+              {{ med.unit }}
+              <br />
+              <small
+                >{{ med.frequency }} pendant {{ med.duration }} ({{
+                  med.route
+                }})</small
+              >
+            </li>
+          </ul>
+        </div>
+
+        <div
+          class="preview-instructions"
+          *ngIf="prescriptionForm.get('instructions')?.value"
+        >
+          <strong>Instructions:</strong>
+          <p>{{ prescriptionForm.get("instructions")?.value }}</p>
+        </div>
+
+        <div class="preview-footer">
+          <div class="preview-expiry">
+            <strong>Valable jusqu'au:</strong>
+            {{ prescriptionForm.get("expiryDate")?.value || "--/--/----" }}
+          </div>
+          <div class="preview-signature">
+            <strong>Signature:</strong> _________________________
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Indicateur de chargement -->
+  <div class="loading-overlay" *ngIf="isSubmitting">
+    <div class="loading-spinner"></div>
+    <p>Création de l'ordonnance en cours...</p>
+  </div>
+</div>

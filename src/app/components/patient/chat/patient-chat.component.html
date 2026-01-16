@@ -1,0 +1,241 @@
+<div class="chat-container">
+  <div class="chat-header">
+    <h2><i class="fas fa-comments"></i> Messagerie médicale</h2>
+    <p>Communiquez avec vos médecins en toute sécurité</p>
+  </div>
+
+  <div class="chat-layout">
+    <!-- Liste des conversations -->
+    <div class="conversations-sidebar">
+      <div class="sidebar-header">
+        <div class="search-bar">
+          <i class="fas fa-search"></i>
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="filterConversations()"
+            placeholder="Rechercher une conversation..."
+            class="search-input"
+          />
+        </div>
+        <button class="btn-primary btn-small" routerLink="/patient/find-doctor">
+          <i class="fas fa-user-plus"></i> Nouveau médecin
+        </button>
+      </div>
+
+      <div class="conversations-list">
+        <div *ngIf="isLoading" class="loading-conversations">
+          <div class="spinner"></div>
+          <span>Chargement...</span>
+        </div>
+
+        <div
+          *ngIf="!isLoading && filteredConversations.length === 0"
+          class="no-conversations"
+        >
+          <i class="fas fa-comment-slash"></i>
+          <p>Aucune conversation</p>
+          <small>Commencez par trouver un médecin</small>
+        </div>
+
+        <div
+          *ngFor="let conv of filteredConversations"
+          class="conversation-item"
+          [class.active]="selectedConversation?.id === conv.id"
+          (click)="selectConversation(conv)"
+        >
+          <div class="conversation-avatar">
+            {{ getOtherParticipantName(conv).charAt(0) || '?' }}
+          </div>
+          <div class="conversation-info">
+            <div class="conversation-header">
+              <strong>{{ getOtherParticipantName(conv) }}</strong>
+              <span class="conversation-time"
+                >{{ conv.lastMessage?.createdAt | date:'shortTime' }}</span
+              >
+            </div>
+            <p class="conversation-preview">{{ getPreview(conv) }}</p>
+
+            <div class="conversation-footer">
+              <span class="conversation-status" *ngIf="conv.lastMessage">
+                {{ isMyMessage(conv.lastMessage) ? 'Vous: ' : '' }}
+              </span>
+              <span class="unread-badge" *ngIf="conv.unreadCount > 0">
+                {{ conv.unreadCount }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Zone de chat -->
+    <div class="chat-main" *ngIf="selectedConversation">
+      <!-- En-tête de conversation -->
+      <div class="chat-header-bar">
+        <div class="chat-partner-info">
+          <div class="partner-avatar">
+            {{ getOtherParticipantName(selectedConversation).charAt(0) || '?'
+            }}
+          </div>
+          <div class="partner-details">
+            <h4>{{ getOtherParticipantName(selectedConversation) }}</h4>
+            <small class="partner-status">En ligne</small>
+          </div>
+        </div>
+        <div class="chat-actions">
+          <button class="btn-icon" title="Appeler">
+            <i class="fas fa-phone"></i>
+          </button>
+          <button class="btn-icon" title="Voir le profil">
+            <i class="fas fa-user-md"></i>
+          </button>
+          <button
+            class="btn-icon"
+            title="Supprimer"
+            (click)="deleteConversation()"
+          >
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div class="messages-container" #messageContainer>
+        <div *ngIf="messages.length === 0" class="no-messages">
+          <i class="fas fa-comment-medical"></i>
+          <p>Commencez la conversation</p>
+          <small>Envoyez votre premier message</small>
+        </div>
+
+        <div *ngFor="let message of messages" class="message-wrapper">
+          <div
+            class="message-item"
+            [class.my-message]="isMyMessage(message)"
+            [class.other-message]="!isMyMessage(message)"
+          >
+            <div class="message-content">
+              <div class="message-text">{{ message.content }}</div>
+
+              <div
+                *ngIf="message.attachments && message.attachments.length > 0"
+                class="message-attachments"
+              >
+                <div
+                  *ngFor="let attachment of message.attachments"
+                  class="attachment"
+                >
+                  <img
+                    *ngIf="attachment.endsWith('.jpg') || attachment.endsWith('.png') || attachment.endsWith('.jpeg')"
+                    [src]="attachment"
+                    alt="Image"
+                    class="attachment-image"
+                  />
+                  <div
+                    *ngIf="!attachment.includes('http')"
+                    class="attachment-file"
+                  >
+                    <i class="fas fa-file"></i>
+                    <span>{{ attachment }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="message-meta">
+                <span class="message-time"
+                  >{{ formatDate(message.createdAt) }}</span
+                >
+                <span *ngIf="isMyMessage(message)" class="message-status">
+                  <i class="fas fa-check" [class.read]="message.read"></i>
+                </span>
+              </div>
+            </div>
+
+            <div class="message-actions" *ngIf="isMyMessage(message)">
+              <button
+                class="btn-icon-small"
+                (click)="deleteMessage(message.id)"
+              >
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Zone de saisie -->
+      <div class="message-input-area">
+        <!-- Fichiers sélectionnés -->
+        <div *ngIf="selectedFiles.length > 0" class="selected-files">
+          <div
+            *ngFor="let file of selectedFiles; let i = index"
+            class="file-item"
+          >
+            <i class="fas fa-file"></i>
+            <span>{{ file.name }}</span>
+            <button class="btn-icon-small" (click)="removeFile(i)">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Input de message -->
+        <div class="input-container">
+          <button
+            class="btn-icon"
+            (click)="selectFiles()"
+            title="Ajouter un fichier"
+          >
+            <i class="fas fa-paperclip"></i>
+          </button>
+
+          <textarea
+            [(ngModel)]="newMessage"
+            placeholder="Écrivez votre message..."
+            class="message-input"
+            rows="1"
+            (keydown.enter)="sendMessage(); $event.preventDefault()"
+          ></textarea>
+
+          <button
+            class="btn-primary btn-send"
+            (click)="sendMessage()"
+            [disabled]="(!newMessage.trim() && selectedFiles.length === 0) || isSending || isUploading"
+          >
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+
+        <input
+          type="file"
+          #fileInput
+          (change)="onFilesSelected($event)"
+          multiple
+          style="display: none"
+          accept="image/*,.pdf,.doc,.docx"
+        />
+
+        <div class="input-info">
+          <small *ngIf="isUploading">
+            <i class="fas fa-spinner fa-spin"></i> Envoi des fichiers...
+          </small>
+          <small class="security-note">
+            <i class="fas fa-lock"></i> Messages chiffrés de bout en bout
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Aucune conversation sélectionnée -->
+    <div class="chat-empty" *ngIf="!selectedConversation">
+      <div class="empty-state">
+        <i class="fas fa-comment-medical"></i>
+        <h4>Sélectionnez une conversation</h4>
+        <p>Choisissez un médecin avec qui discuter</p>
+        <button class="btn-primary" routerLink="/patient/find-doctor">
+          <i class="fas fa-search"></i> Trouver un médecin
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -69,9 +69,9 @@ export class SidebarComponent implements OnInit, OnChanges, OnDestroy {
   readonly appName = "MediCare ";
   readonly appLogo = "fas fa-heartbeat";
 
-  // Quick actions items
+  // Quick actions items - MIS À JOUR
   quickActions = [
-    { icon: "📊", label: "Tableau de bord", route: "/admin", roles: ["admin"] },
+    { icon: "📊", label: "Tableau de bord", route: "/admin/dashboard", roles: ["admin"] },
     {
       icon: "👥",
       label: "Gestion utilisateurs",
@@ -93,7 +93,7 @@ export class SidebarComponent implements OnInit, OnChanges, OnDestroy {
     {
       icon: "🏥",
       label: "Mon dossier",
-      route: "/patient/dossier",
+      route: "/patient/medical-records",
       roles: ["patient"],
     },
     {
@@ -103,10 +103,34 @@ export class SidebarComponent implements OnInit, OnChanges, OnDestroy {
       roles: ["patient"],
     },
     {
+      icon: "🔍",
+      label: "Trouver un médecin",
+      route: "/patient/find-doctor",
+      roles: ["patient"],
+    },
+    {
+      icon: "💬",
+      label: "Messagerie",
+      route: "/patient/chat",
+      roles: ["patient"],
+    },
+    {
       icon: "⚙️",
       label: "Paramètres",
-      route: "/settings",
+      route: "/profile/settings",
       roles: ["admin", "doctor", "patient"],
+    },
+    {
+      icon: "📈",
+      label: "Suivi santé",
+      route: "/patient/health-tracker",
+      roles: ["patient"],
+    },
+    {
+      icon: "🆘",
+      label: "Urgences",
+      route: "/patient/emergency",
+      roles: ["patient"],
     },
   ];
 
@@ -305,7 +329,7 @@ export class SidebarComponent implements OnInit, OnChanges, OnDestroy {
     return !this.isSidebarCollapsed || this.isMobileOpen;
   }
 
-  // Déterminer les menus selon le rôle
+  // Déterminer les menus selon le rôle - MIS À JOUR
   getMenuItems(): MenuItem[] {
     const commonMenus: MenuItem[] = [
       {
@@ -364,6 +388,26 @@ export class SidebarComponent implements OnInit, OnChanges, OnDestroy {
         icon: "fas fa-calendar",
         roles: ["doctor"],
       },
+      {
+        id: "prescriptions",
+        label: "Prescriptions",
+        icon: "fas fa-prescription-bottle-alt",
+        roles: ["doctor"],
+      },
+      {
+        id: "medical-records",
+        label: "Dossiers patients",
+        icon: "fas fa-file-medical",
+        roles: ["doctor"],
+      },
+      {
+        id: "consultations",
+        label: "Téléconsultations",
+        icon: "fas fa-video",
+        roles: ["doctor"],
+        badge: 3, // Exemple: 3 consultations en attente
+        badgeColor: "warning",
+      },
     ];
 
     const patientMenus: MenuItem[] = [
@@ -375,7 +419,7 @@ export class SidebarComponent implements OnInit, OnChanges, OnDestroy {
       },
       {
         id: "medical-records",
-        label: "Dossiers médicaux",
+        label: "Dossier médical",
         icon: "fas fa-file-medical",
         roles: ["patient"],
       },
@@ -383,6 +427,32 @@ export class SidebarComponent implements OnInit, OnChanges, OnDestroy {
         id: "prescriptions",
         label: "Ordonnances",
         icon: "fas fa-prescription",
+        roles: ["patient"],
+      },
+      {
+        id: "find-doctor",
+        label: "Trouver un médecin",
+        icon: "fas fa-search",
+        roles: ["patient"],
+      },
+      {
+        id: "chat",
+        label: "Messagerie",
+        icon: "fas fa-comments",
+        roles: ["patient"],
+        badge: 5, // Exemple: 5 messages non lus
+        badgeColor: "success",
+      },
+      {
+        id: "health-tracker",
+        label: "Suivi santé",
+        icon: "fas fa-heartbeat",
+        roles: ["patient"],
+      },
+      {
+        id: "emergency",
+        label: "Urgences",
+        icon: "fas fa-phone-alt",
         roles: ["patient"],
       },
     ];
@@ -413,6 +483,16 @@ export class SidebarComponent implements OnInit, OnChanges, OnDestroy {
       appointments: "Rendez-vous",
       reports: "Rapports",
       settings: "Paramètres",
+      'my-appointments': "Mes rendez-vous",
+      'medical-records': "Dossier médical",
+      prescriptions: "Ordonnances",
+      'find-doctor': "Trouver un médecin",
+      chat: "Messagerie",
+      'health-tracker': "Suivi santé",
+      emergency: "Urgences",
+      patients: "Mes patients",
+      schedule: "Mon planning",
+      consultations: "Téléconsultations",
     };
 
     return sectionTitles[sectionId] || "Tableau de bord";

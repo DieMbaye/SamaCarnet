@@ -1,0 +1,241 @@
+<div class="consultation-container">
+  <!-- En-tête -->
+  <div class="consultation-header">
+    <div class="header-info">
+      <h2><i class="fas fa-video"></i> Consultation vidéo</h2>
+      <div class="consultation-meta">
+        <span class="consultation-status" [class.active]="isCalling">
+          <i class="fas fa-circle"></i>
+          {{ isCalling ? 'En cours' : 'Connecté' }}
+        </span>
+        <span class="consultation-duration">
+          <i class="fas fa-clock"></i>
+          {{ formatTime(consultationDuration) }}
+        </span>
+        <span class="consultation-participants">
+          <i class="fas fa-users"></i>
+          {{ participants.length }} participants
+        </span>
+      </div>
+    </div>
+    
+    <div class="header-actions">
+      <button class="btn-secondary" (click)="toggleTools()" title="Outils">
+        <i class="fas fa-tools"></i> Outils
+      </button>
+      <button class="btn-danger" (click)="leaveConsultation()">
+        <i class="fas fa-phone-slash"></i> Terminer
+      </button>
+    </div>
+  </div>
+
+  <!-- Contenu principal -->
+  <div class="consultation-main">
+    <!-- Zone vidéo -->
+    <div class="video-section">
+      <div class="video-grid">
+        <!-- Vidéo distante -->
+        <div class="video-container remote-video-container">
+          <video #remoteVideo autoplay playsinline class="remote-video"></video>
+          <div *ngIf="!isCalling" class="video-placeholder">
+            <i class="fas fa-user-md"></i>
+            <p>En attente du médecin...</p>
+          </div>
+          <div class="video-overlay">
+            <span class="participant-name">Dr. Médecin</span>
+            <span class="video-status" *ngIf="isVideoOff">
+              <i class="fas fa-video-slash"></i> Caméra désactivée
+            </span>
+          </div>
+        </div>
+
+        <!-- Vidéo locale -->
+        <div class="video-container local-video-container">
+          <video #localVideo autoplay playsinline muted class="local-video"></video>
+          <div class="video-overlay">
+            <span class="participant-name">Vous</span>
+            <div class="video-controls">
+              <button class="btn-icon-small" (click)="toggleAudio()" [class.muted]="isAudioMuted">
+                <i class="fas" [class.fa-microphone]="!isAudioMuted" [class.fa-microphone-slash]="isAudioMuted"></i>
+              </button>
+              <button class="btn-icon-small" (click)="toggleVideo()" [class.off]="isVideoOff">
+                <i class="fas" [class.fa-video]="!isVideoOff" [class.fa-video-slash]="isVideoOff"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contrôles -->
+      <div class="media-controls">
+        <button class="btn-control" (click)="toggleAudio()" [class.active]="!isAudioMuted">
+          <i class="fas" [class.fa-microphone]="!isAudioMuted" [class.fa-microphone-slash]="isAudioMuted"></i>
+        </button>
+        
+        <button class="btn-control" (click)="toggleVideo()" [class.active]="!isVideoOff">
+          <i class="fas" [class.fa-video]="!isVideoOff" [class.fa-video-slash]="isVideoOff"></i>
+        </button>
+        
+        <button class="btn-control" (click)="toggleScreenShare()" [class.active]="isScreenSharing">
+          <i class="fas fa-desktop"></i>
+        </button>
+        
+        <button class="btn-control" (click)="toggleRecording()" [class.active]="isRecording">
+          <i class="fas fa-circle" [class.recording]="isRecording"></i>
+        </button>
+        
+        <button class="btn-control btn-end-call" (click)="leaveConsultation()">
+          <i class="fas fa-phone-slash"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Chat et outils -->
+    <div class="sidebar-section">
+      <!-- Chat -->
+      <div class="chat-sidebar" [class.hidden]="!isChatOpen">
+        <div class="chat-header">
+          <h4><i class="fas fa-comments"></i> Chat</h4>
+          <button class="btn-icon-small" (click)="toggleChat()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <div class="chat-messages" #chatContainer>
+          <div *ngFor="let message of messages" class="message" [class.my-message]="isMyMessage(message)">
+            <div class="message-header">
+              <strong>{{ message.senderName }}</strong>
+              <small>{{ formatMessageTime(message.timestamp) }}</small>
+            </div>
+            <div class="message-content">{{ message.content }}</div>
+          </div>
+          
+          <div *ngIf="messages.length === 0" class="no-messages">
+            <i class="fas fa-comment"></i>
+            <p>Aucun message</p>
+            <small>Envoyez un message pour démarrer la conversation</small>
+          </div>
+        </div>
+        
+        <div class="chat-input">
+          <input
+            type="text"
+            [(ngModel)]="newMessage"
+            placeholder="Écrivez un message..."
+            (keyup.enter)="sendMessage()"
+            class="chat-input-field"
+          />
+          <button class="btn-icon" (click)="sendMessage()">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Outils médicaux -->
+      <div class="tools-sidebar" *ngIf="showTools || selectedTool">
+        <div class="tools-header">
+          <h4><i class="fas fa-tools"></i> Outils médicaux</h4>
+          <button class="btn-icon-small" (click)="selectedTool = null; showTools = false">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <div class="tools-grid" *ngIf="!selectedTool">
+          <button class="tool-btn" (click)="selectTool('prescription')">
+            <i class="fas fa-prescription"></i>
+            <span>Prescription</span>
+          </button>
+          
+          <button class="tool-btn" (click)="selectTool('notes')">
+            <i class="fas fa-sticky-note"></i>
+            <span>Notes</span>
+          </button>
+          
+          <button class="tool-btn" (click)="selectTool('files')">
+            <i class="fas fa-file-medical"></i>
+            <span>Documents</span>
+          </button>
+          
+          <button class="tool-btn" (click)="selectTool('whiteboard')">
+            <i class="fas fa-paint-brush"></i>
+            <span>Tableau blanc</span>
+          </button>
+        </div>
+
+        <!-- Outil prescription -->
+        <div *ngIf="selectedTool === 'prescription'" class="tool-content">
+          <h5><i class="fas fa-prescription-bottle-alt"></i> Nouvelle prescription</h5>
+          
+          <div class="form-group">
+            <label>Médicaments</label>
+            <div *ngFor="let med of prescriptionData.medications; let i = index" class="medication-item">
+              <input [(ngModel)]="med.name" placeholder="Nom du médicament">
+              <input [(ngModel)]="med.dosage" placeholder="Dosage">
+              <button class="btn-icon-small" (click)="prescriptionData.medications.splice(i, 1)">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <button class="btn-secondary btn-small" (click)="prescriptionData.medications.push({name: '', dosage: ''})">
+              <i class="fas fa-plus"></i> Ajouter médicament
+            </button>
+          </div>
+          
+          <div class="form-group">
+            <label>Instructions</label>
+            <textarea [(ngModel)]="prescriptionData.instructions" rows="3" placeholder="Instructions pour le patient..."></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label>Durée du traitement</label>
+            <input [(ngModel)]="prescriptionData.duration" placeholder="ex: 7 jours">
+          </div>
+          
+          <div class="tool-actions">
+            <button class="btn-secondary" (click)="selectedTool = null">Annuler</button>
+            <button class="btn-primary" (click)="sendPrescription()">Envoyer</button>
+          </div>
+        </div>
+
+        <!-- Outil notes -->
+        <div *ngIf="selectedTool === 'notes'" class="tool-content">
+          <h5><i class="fas fa-sticky-note"></i> Notes de consultation</h5>
+          <textarea placeholder="Prenez des notes pendant la consultation..." rows="10"></textarea>
+          <div class="tool-actions">
+            <button class="btn-primary">Enregistrer</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bouton chat (quand caché) -->
+      <button *ngIf="!isChatOpen" class="btn-chat-toggle" (click)="toggleChat()">
+        <i class="fas fa-comment"></i>
+        <span class="notification-badge" *ngIf="messages.length > 0">{{ messages.length }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Informations consultation -->
+  <div class="consultation-info">
+    <div class="info-item">
+      <i class="fas fa-shield-alt"></i>
+      <span>Consultation sécurisée et chiffrée</span>
+    </div>
+    <div class="info-item">
+      <i class="fas fa-user-md"></i>
+      <span>Médecin: Dr. {{ consultation?.doctorId ? 'Nom Médecin' : 'En attente' }}</span>
+    </div>
+    <div class="info-item">
+      <i class="fas fa-calendar"></i>
+      <span>RDV: {{ consultation?.appointmentId ? 'Consultation programmée' : 'Consultation spontanée' }}</span>
+    </div>
+  </div>
+
+  <!-- Chargement -->
+  <div *ngIf="isLoading" class="loading-overlay">
+    <div class="loading-content">
+      <div class="spinner"></div>
+      <p>Connexion à la consultation...</p>
+      <small>Veuillez patienter</small>
+    </div>
+  </div>
+</div>

@@ -68,6 +68,16 @@ export class PatientDashboardComponent implements OnInit, OnDestroy {
       this.activeSection = 'medical-records';
     } else if (url.includes('/patient/prescriptions')) {
       this.activeSection = 'prescriptions';
+    } else if (url.includes('/patient/find-doctor')) {
+      this.activeSection = 'find-doctor';
+    } else if (url.includes('/patient/chat')) {
+      this.activeSection = 'chat';
+    } else if (url.includes('/patient/health-tracker')) {
+      this.activeSection = 'health-tracker';
+    } else if (url.includes('/patient/emergency')) {
+      this.activeSection = 'emergency';
+    } else if (url.includes('/patient/consultation/')) {
+      this.activeSection = 'chat'; // Consultation fait partie de la messagerie
     } else {
       this.activeSection = 'dashboard';
     }
@@ -93,7 +103,11 @@ export class PatientDashboardComponent implements OnInit, OnDestroy {
       'dashboard': ['/patient', 'dashboard'],
       'my-appointments': ['/patient', 'appointments'],
       'medical-records': ['/patient', 'medical-records'],
-      'prescriptions': ['/patient', 'prescriptions']
+      'prescriptions': ['/patient', 'prescriptions'],
+      'find-doctor': ['/patient', 'find-doctor'],
+      'chat': ['/patient', 'chat'],
+      'health-tracker': ['/patient', 'health-tracker'],
+      'emergency': ['/patient', 'emergency']
     };
 
     const route = routeMap[section] || ['/patient', 'dashboard'];

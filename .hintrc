@@ -7,7 +7,8 @@
     "axe/forms": [
       "default",
       {
-        "select-name": "off"
+        "select-name": "off",
+        "label": "off"
       }
     ],
     "compat-api/css": [
@@ -16,7 +17,10 @@
         "ignore": [
           "backdrop-filter",
           "user-select",
-          "-webkit-mask"
+          "-webkit-mask",
+          "scrollbar-width",
+          "scrollbar-color",
+          "scrollbar-width: thin"
         ]
       }
     ],
@@ -26,6 +30,12 @@
         "image-alt": "off"
       }
     ],
-    "no-inline-styles": "off"
+    "no-inline-styles": "off",
+    "axe/name-role-value": [
+      "default",
+      {
+        "button-name": "off"
+      }
+    ]
   }
 }

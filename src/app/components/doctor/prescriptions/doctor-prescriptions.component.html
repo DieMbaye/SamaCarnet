@@ -1,0 +1,444 @@
+<div class="doctor-prescriptions">
+  <!-- En-tête -->
+  <div class="prescriptions-header">
+    <div class="header-content">
+      <h2><i class="fas fa-prescription"></i> Gestion des Ordonnances</h2>
+      <p>Prescrivez et gérez les ordonnances de vos patients</p>
+    </div>
+    
+    <div class="header-actions">
+      <button class="btn-primary" (click)="navigateToCreate()" [disabled]="isLoading">
+        <i class="fas fa-plus"></i> Nouvelle ordonnance
+      </button>
+      <button class="btn-secondary" (click)="navigateToTemplates()" [disabled]="isLoading">
+        <i class="fas fa-file-medical-alt"></i> Templates
+      </button>
+      <button class="btn-secondary" (click)="refreshData()" [disabled]="isLoading">
+        <i class="fas fa-sync-alt" [class.fa-spin]="isLoading"></i>
+        {{ isLoading ? 'Actualisation...' : 'Actualiser' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Demandes de renouvellement -->
+  <div class="renewal-requests-section" *ngIf="renewalRequests.length > 0">
+    <div class="section-header">
+      <div class="section-title">
+        <i class="fas fa-redo warning-icon"></i>
+        <h3>Demandes de renouvellement en attente</h3>
+        <span class="count-badge">{{ renewalRequests.length }}</span>
+      </div>
+      <p>Vos patients ont demandé le renouvellement de leurs ordonnances</p>
+    </div>
+    
+    <div class="renewal-grid">
+      <div *ngFor="let prescription of renewalRequests" class="renewal-card">
+        <div class="renewal-header">
+          <div class="patient-info">
+            <div class="patient-avatar">
+              {{ getPatientName(prescription.patientId) | slice:0:1 }}
+            </div>
+            <div>
+              <h4>{{ getPatientName(prescription.patientId) }}</h4>
+              <small>Demandé le {{ formatDate(prescription.renewalRequestDate || prescription.date) }}</small>
+            </div>
+          </div>
+          <div class="renewal-status">
+            <span class="status-badge status-active">À traiter</span>
+          </div>
+        </div>
+        
+        <div class="renewal-body">
+          <div class="medications-summary">
+            <strong>Médicaments:</strong>
+            <span>{{ getMedicationSummary(prescription.medications) }}</span>
+          </div>
+          <div class="expiry-info">
+            <strong>Expire le:</strong>
+            <span>{{ formatDate(prescription.expiryDate) }}</span>
+          </div>
+        </div>
+        
+        <div class="renewal-actions">
+          <button class="btn-small approve" (click)="approveRenewal(prescription)">
+            <i class="fas fa-check"></i> Approuver
+          </button>
+          <button class="btn-small reject" (click)="rejectRenewal(prescription.id)">
+            <i class="fas fa-times"></i> Refuser
+          </button>
+          <button class="btn-small view" (click)="showPrescriptionDetails(prescription)">
+            <i class="fas fa-eye"></i> Détails
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistiques -->
+  <div class="prescription-stats">
+    <div class="stat-card" [class.active]="statusFilter === 'active'">
+      <div class="stat-icon">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ getActiveCount() }}</h3>
+        <p>Ordonnances actives</p>
+      </div>
+    </div>
+    
+    <div class="stat-card" [class.active]="statusFilter === 'expired'">
+      <div class="stat-icon">
+        <i class="fas fa-clock"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ getExpiringSoonCount() }}</h3>
+        <p>Expirent bientôt</p>
+      </div>
+    </div>
+    
+    <div class="stat-card" [class.active]="statusFilter === 'all'">
+      <div class="stat-icon">
+        <i class="fas fa-file-medical"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ prescriptions.length }}</h3>
+        <p>Total prescrites</p>
+      </div>
+    </div>
+    
+    <div class="stat-card info">
+      <div class="stat-icon">
+        <i class="fas fa-redo"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ getRenewalRequestCount() }}</h3>
+        <p>Renouvellements</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="filters-section">
+    <div class="filters-header">
+      <h3>Filtrer les ordonnances</h3>
+      <button class="btn-clear-filters" (click)="clearFilters()" *ngIf="statusFilter !== 'all' || patientFilter || dateFromFilter || dateToFilter || searchTerm">
+        <i class="fas fa-times"></i> Effacer les filtres
+      </button>
+    </div>
+    
+    <div class="filters-grid">
+      <div class="filter-group">
+        <label><i class="fas fa-search"></i> Rechercher</label>
+        <div class="search-input-wrapper">
+          <input 
+            type="text" 
+            [(ngModel)]="searchTerm" 
+            (input)="filterPrescriptions()"
+            placeholder="Patient, médicament, instructions..."
+            class="search-input"
+          />
+        </div>
+      </div>
+      
+      <div class="filter-group">
+        <label><i class="fas fa-tag"></i> Statut</label>
+        <select [(ngModel)]="statusFilter" (change)="filterPrescriptions()" class="form-select">
+          <option value="all">Tous les statuts</option>
+          <option value="active">Actives</option>
+          <option value="expired">Expirées</option>
+          <option value="completed">Terminées</option>
+          <option value="cancelled">Annulées</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label><i class="fas fa-user-injured"></i> Patient</label>
+        <select [(ngModel)]="patientFilter" (change)="filterPrescriptions()" class="form-select">
+          <option value="">Tous les patients</option>
+          <option *ngFor="let patient of patients" [value]="patient.uid">
+            {{ patient.displayName }}
+          </option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label><i class="fas fa-calendar-alt"></i> Du</label>
+        <input 
+          type="date" 
+          [(ngModel)]="dateFromFilter"
+          (change)="filterPrescriptions()"
+          class="form-input"
+        />
+      </div>
+      
+      <div class="filter-group">
+        <label><i class="fas fa-calendar-alt"></i> Au</label>
+        <input 
+          type="date" 
+          [(ngModel)]="dateToFilter"
+          (change)="filterPrescriptions()"
+          class="form-input"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Chargement -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="loading-spinner"></div>
+    <p>Chargement des ordonnances...</p>
+  </div>
+
+  <!-- État vide -->
+  <div *ngIf="!isLoading && prescriptions.length === 0" class="empty-state">
+    <div class="empty-content">
+      <div class="empty-icon">
+        <i class="fas fa-prescription-bottle"></i>
+      </div>
+      <h3>Aucune ordonnance</h3>
+      <p>Vous n'avez pas encore prescrit d'ordonnance.</p>
+      <button class="btn-primary" (click)="navigateToCreate()">
+        <i class="fas fa-plus"></i> Créer votre première ordonnance
+      </button>
+    </div>
+  </div>
+
+  <!-- État filtré vide -->
+  <div *ngIf="!isLoading && prescriptions.length > 0 && filteredPrescriptions.length === 0" class="empty-state">
+    <div class="empty-content">
+      <div class="empty-icon">
+        <i class="fas fa-search"></i>
+      </div>
+      <h3>Aucune ordonnance trouvée</h3>
+      <p>Aucune ordonnance ne correspond à vos critères de recherche.</p>
+      <button class="btn-primary" (click)="clearFilters()">
+        <i class="fas fa-times"></i> Effacer les filtres
+      </button>
+    </div>
+  </div>
+
+  <!-- Tableau des ordonnances -->
+  <div class="prescriptions-table" *ngIf="!isLoading && filteredPrescriptions.length > 0">
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Patient</th>
+            <th>Date</th>
+            <th>Expiration</th>
+            <th>Médicaments</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let prescription of filteredPrescriptions">
+            <td>
+              <div class="patient-cell">
+                <div class="patient-avatar small">
+                  {{ getPatientName(prescription.patientId) | slice:0:1 }}
+                </div>
+                <div class="patient-info">
+                  <strong>{{ getPatientName(prescription.patientId) }}</strong>
+                  <small>{{ prescription.medications.length }} médicament(s)</small>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="date-cell">
+                {{ formatDate(prescription.date) }}
+              </div>
+            </td>
+            <td>
+              <div class="expiry-cell" [class.expiring]="isExpiringSoon(prescription)" [class.expired]="prescription.status === 'expired'">
+                {{ formatDate(prescription.expiryDate) }}
+                <span *ngIf="isExpiringSoon(prescription)" class="expiry-warning">
+                  <i class="fas fa-exclamation-triangle"></i>
+                </span>
+              </div>
+            </td>
+            <td>
+              <div class="medications-cell">
+                {{ getMedicationSummary(prescription.medications) }}
+              </div>
+            </td>
+            <td>
+              <div class="status-cell">
+                <span class="status-badge" [class]="getStatusClass(prescription.status)">
+                  {{ getStatusDisplay(prescription.status) }}
+                </span>
+                <span *ngIf="prescription.renewalRequested" class="renewal-indicator">
+                  <i class="fas fa-redo"></i>
+                </span>
+              </div>
+            </td>
+            <td>
+              <div class="actions-cell">
+                <button class="btn-icon view" (click)="showPrescriptionDetails(prescription)" title="Voir les détails">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn-icon edit" title="Modifier">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn-icon cancel" (click)="cancelPrescription(prescription.id)" title="Annuler l'ordonnance">
+                  <i class="fas fa-times"></i>
+                </button>
+                <button class="btn-icon download" title="Télécharger">
+                  <i class="fas fa-download"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination-section" *ngIf="filteredPrescriptions.length > 0">
+    <div class="pagination-info">
+      Affichage de {{ filteredPrescriptions.length }} ordonnance(s) sur {{ prescriptions.length }}
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Détails de l'ordonnance -->
+<div class="modal-overlay" *ngIf="showDetailsModal && selectedPrescription" (click)="closeDetailsModal()"></div>
+
+<div class="modal prescription-details-modal doctor" *ngIf="showDetailsModal && selectedPrescription" (click)="$event.stopPropagation()">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3><i class="fas fa-file-medical"></i> Détails de l'ordonnance</h3>
+      <button class="btn-close-modal" (click)="closeDetailsModal()" aria-label="Fermer">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <!-- Informations patient -->
+      <div class="patient-info-section" *ngIf="selectedPatient">
+        <div class="patient-header">
+          <div class="patient-avatar">
+            {{ selectedPatient.displayName | slice:0:1 }}
+          </div>
+          <div class="patient-details">
+            <h4>{{ selectedPatient.displayName }}</h4>
+            <div class="patient-meta">
+              <span><i class="fas fa-envelope"></i> {{ selectedPatient.email }}</span>
+              <span *ngIf="selectedPatient.phone"><i class="fas fa-phone"></i> {{ selectedPatient.phone }}</span>
+              <span *ngIf="selectedPatient.birthDate"><i class="fas fa-birthday-cake"></i> {{ formatDate(selectedPatient.birthDate) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- En-tête de l'ordonnance -->
+      <div class="prescription-header">
+        <div class="prescription-id">
+          <strong>ID:</strong> {{ selectedPrescription.id | slice:0:8 }}...
+        </div>
+        <div class="prescription-dates">
+          <div class="date-item">
+            <strong>Prescrite le:</strong>
+            <span>{{ formatDate(selectedPrescription.date) }}</span>
+          </div>
+          <div class="date-item">
+            <strong>Expire le:</strong>
+            <span [class.expired]="selectedPrescription.status === 'expired'">
+              {{ formatDate(selectedPrescription.expiryDate) }}
+            </span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Statut et renouvellement -->
+      <div class="status-section">
+        <div class="status-display">
+          <span class="status-badge" [class]="getStatusClass(selectedPrescription.status)">
+            {{ getStatusDisplay(selectedPrescription.status) }}
+          </span>
+          <span *ngIf="selectedPrescription.renewalRequested" class="renewal-requested">
+            <i class="fas fa-redo"></i> Renouvellement demandé le {{ formatDate(selectedPrescription.renewalRequestDate || selectedPrescription.date) }}
+          </span>
+        </div>
+      </div>
+      
+      <!-- Médicaments -->
+      <div class="medications-section">
+        <h5><i class="fas fa-pills"></i> Médicaments prescrits</h5>
+        <div class="medications-list">
+          <div *ngFor="let med of selectedPrescription.medications; let i = index" class="medication-detail">
+            <div class="medication-number">{{ i + 1 }}.</div>
+            <div class="medication-content">
+              <div class="medication-name">
+                <strong>{{ med.name }}</strong>
+                <span class="dosage">{{ med.dosage }}</span>
+              </div>
+              <div class="medication-details">
+                <span class="detail-item"><i class="fas fa-clock"></i> {{ med.frequency }}</span>
+                <span class="detail-item"><i class="fas fa-calendar"></i> {{ med.duration }}</span>
+                <span class="detail-item"><i class="fas fa-syringe"></i> {{ med.quantity }} {{ med.unit }} ({{ med.route }})</span>
+              </div>
+              <div *ngIf="med.notes" class="medication-notes">
+                <i class="fas fa-sticky-note"></i> {{ med.notes }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Instructions -->
+      <div class="instructions-section" *ngIf="selectedPrescription.instructions">
+        <h5><i class="fas fa-file-medical-alt"></i> Instructions médicales</h5>
+        <div class="instructions-content">
+          {{ selectedPrescription.instructions }}
+        </div>
+      </div>
+      
+      <!-- Historique des actions -->
+      <div class="history-section">
+        <h5><i class="fas fa-history"></i> Historique</h5>
+        <div class="history-list">
+          <div class="history-item">
+            <div class="history-icon">
+              <i class="fas fa-plus-circle"></i>
+            </div>
+            <div class="history-content">
+              <strong>Ordonnance créée</strong>
+              <p>par le Dr. {{ currentDoctor?.displayName }}</p>
+              <small>{{ formatDate(selectedPrescription.createdAt) }}</small>
+            </div>
+          </div>
+          <div *ngIf="selectedPrescription.renewalRequested" class="history-item">
+            <div class="history-icon">
+              <i class="fas fa-redo"></i>
+            </div>
+            <div class="history-content">
+              <strong>Renouvellement demandé</strong>
+              <p>par le patient</p>
+              <small>{{ formatDate(selectedPrescription.renewalRequestDate || selectedPrescription.date) }}</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-actions">
+      <button class="btn-secondary" (click)="closeDetailsModal()">
+        <i class="fas fa-times"></i> Fermer
+      </button>
+      <button class="btn-primary" (click)="downloadPrescription(selectedPrescription.id)">
+        <i class="fas fa-download"></i> Télécharger
+      </button>
+      <button class="btn-warning" 
+              *ngIf="selectedPrescription.renewalRequested"
+              (click)="approveRenewal(selectedPrescription)">
+        <i class="fas fa-check"></i> Approuver le renouvellement
+      </button>
+      <button class="btn-danger" 
+              (click)="cancelPrescription(selectedPrescription.id); closeDetailsModal()">
+        <i class="fas fa-times"></i> Annuler l'ordonnance
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,201 @@
+<div class="health-tracker-container">
+  <!-- En-tête -->
+  <header class="tracker-header">
+    <h1><i class="fas fa-heartbeat"></i> Suivi de santé</h1>
+    <p class="subtitle">Suivez et visualisez vos mesures de santé quotidiennes</p>
+  </header>
+
+  <div class="tracker-content">
+    <!-- Section de sélection de métrique -->
+    <div class="metric-selector-section">
+      <h2><i class="fas fa-chart-line"></i> Sélectionner un indicateur</h2>
+      <div class="metric-cards">
+        <div 
+          *ngFor="let metric of metrics" 
+          class="metric-card" 
+          [class.active]="selectedMetric === metric.id"
+          (click)="switchMetric(metric.id)"
+        >
+          <div class="metric-icon">
+            <i [class]="metric.icon"></i>
+          </div>
+          <div class="metric-info">
+            <h3>{{ metric.name }}</h3>
+            <span class="unit">{{ metric.unit }}</span>
+          </div>
+          <div class="metric-indicator" *ngIf="selectedMetric === metric.id">
+            <i class="fas fa-check"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section d'ajout de mesure -->
+    <div class="add-measurement-section">
+      <h2><i class="fas fa-plus-circle"></i> Ajouter une mesure</h2>
+      <div class="measurement-form">
+        <div class="form-group">
+          <label for="value">
+            <i class="fas fa-ruler"></i> Valeur ({{ getCurrentMetric().unit }})
+          </label>
+          <input 
+            type="number" 
+            id="value" 
+            [(ngModel)]="newMeasurement.value" 
+            placeholder="Entrez la valeur"
+            step="0.1"
+          >
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="date"><i class="fas fa-calendar"></i> Date</label>
+            <input 
+              type="date" 
+              id="date" 
+              [(ngModel)]="newMeasurement.date"
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="time"><i class="fas fa-clock"></i> Heure</label>
+            <input 
+              type="time" 
+              id="time" 
+              [(ngModel)]="newMeasurement.time"
+            >
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="notes"><i class="fas fa-sticky-note"></i> Notes (optionnel)</label>
+          <textarea 
+            id="notes" 
+            [(ngModel)]="newMeasurement.notes" 
+            placeholder="Ajoutez des notes ou observations..."
+            rows="3"
+          ></textarea>
+        </div>
+
+        <button 
+          class="btn-primary" 
+          (click)="addMeasurement()"
+          [disabled]="!newMeasurement.value"
+        >
+          <i class="fas fa-save"></i> Enregistrer la mesure
+        </button>
+      </div>
+    </div>
+
+    <!-- Section statistiques -->
+    <div class="stats-section" *ngIf="getStats()">
+      <h2><i class="fas fa-chart-bar"></i> Statistiques</h2>
+      <div class="stats-cards">
+        <div class="stat-card">
+          <div class="stat-icon bg-primary">
+            <i class="fas fa-history"></i>
+          </div>
+          <div class="stat-info">
+            <h3>Dernière</h3>
+            <p class="stat-value">{{ getStats()?.last }} {{ getCurrentMetric().unit }}</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon bg-success">
+            <i class="fas fa-calculator"></i>
+          </div>
+          <div class="stat-info">
+            <h3>Moyenne</h3>
+            <p class="stat-value">{{ getStats()?.avg | number:'1.1-1' }} {{ getCurrentMetric().unit }}</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon bg-warning">
+            <i class="fas fa-arrow-up"></i>
+          </div>
+          <div class="stat-info">
+            <h3>Maximum</h3>
+            <p class="stat-value">{{ getStats()?.max }} {{ getCurrentMetric().unit }}</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon bg-info">
+            <i class="fas fa-arrow-down"></i>
+          </div>
+          <div class="stat-info">
+            <h3>Minimum</h3>
+            <p class="stat-value">{{ getStats()?.min }} {{ getCurrentMetric().unit }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section graphique -->
+    <div class="chart-section">
+      <div class="chart-header">
+        <h2><i class="fas fa-chart-area"></i> Évolution dans le temps</h2>
+        <button class="btn-secondary" (click)="exportData()">
+          <i class="fas fa-download"></i> Exporter les données
+        </button>
+      </div>
+      <div class="chart-container">
+        <canvas id="healthChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Section historique -->
+    <div class="history-section" *ngIf="measurements.length > 0">
+      <h2><i class="fas fa-history"></i> Historique des mesures</h2>
+      <div class="measurements-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Date et heure</th>
+              <th>Valeur ({{ getCurrentMetric().unit }})</th>
+              <th>Notes</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let measurement of measurements; let i = index">
+              <td>
+                <div class="datetime-cell">
+                  <span class="date">{{ measurement.date }}</span>
+                  <span class="time">{{ measurement.time }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="value-badge">{{ measurement.value }}</span>
+              </td>
+              <td>
+                <span class="notes" *ngIf="measurement.notes">{{ measurement.notes }}</span>
+                <span class="no-notes" *ngIf="!measurement.notes">-</span>
+              </td>
+              <td>
+                <button 
+                  class="btn-danger btn-icon" 
+                  (click)="deleteMeasurement(i)"
+                  title="Supprimer"
+                >
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Message si pas de données -->
+    <div class="empty-state" *ngIf="measurements.length === 0">
+      <div class="empty-icon">
+        <i class="fas fa-clipboard-list"></i>
+      </div>
+      <h3>Aucune mesure enregistrée</h3>
+      <p>Commencez par ajouter votre première mesure en utilisant le formulaire ci-dessus.</p>
+    </div>
+  </div>
+</div>
